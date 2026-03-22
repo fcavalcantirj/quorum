@@ -35,7 +35,7 @@ Declared values (multiples of 4 only):
 |-------|-------|-------|
 | xs | 4px | Icon gaps, badge padding, inline chip gaps |
 | sm | 8px | Button inner padding (vertical), card meta row gaps |
-| md | 16px | Default element spacing, form field gaps, card padding |
+| md | 16px | Default element spacing, form field gaps, card padding, stats counter internal padding |
 | lg | 24px | Section internal padding, grid gaps between room cards |
 | xl | 32px | Page section breaks, container horizontal padding |
 | 2xl | 48px | Major section separators (explore stats bar ↔ grid) |
@@ -44,9 +44,10 @@ Declared values (multiples of 4 only):
 Exceptions:
 - Touch targets for copy-to-clipboard buttons: minimum 44px height (accessibility)
 - Code snippet tab bar: 40px height (compact, developer-focused density)
-- Stats counter numerals: display-size blocks with 20px internal padding
 
-Source: Standard 8-point grid; exceptions inferred from EXPL-02 (stats counters), SNIP-01–03 (snippet UI), D-05 (copy button)
+Note: Stats counter numeral blocks use `md` (16px) internal padding. The previously listed 20px exception has been absorbed into the standard scale — 16px is sufficient for the e2b-style counter layout at 36px display size.
+
+Source: Standard 8-point grid; exceptions inferred from SNIP-01–03 (snippet UI), D-05 (copy button)
 
 ---
 
@@ -55,15 +56,16 @@ Source: Standard 8-point grid; exceptions inferred from EXPL-02 (stats counters)
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 14px | 400 (regular) | 1.5 |
-| Label | 12px | 500 (medium) | 1.4 |
+| Label | 12px | 400 (regular) | 1.4 |
 | Heading | 20px | 600 (semibold) | 1.2 |
-| Display | 36px | 700 (bold) | 1.1 |
+| Display | 36px | 600 (semibold) | 1.1 |
 
 Notes:
-- Stats counters (EXPL-02) use Display size (36px bold) for the number, Label size (12px medium) for the descriptor below it.
+- Stats counters (EXPL-02) use Display size (36px / weight 600) for the number, Label size (12px / weight 400) for the descriptor below it.
 - Integration snippet code blocks use monospace font at 13px / weight 400 — this is the only monospace usage and is exempt from the main type scale.
-- Room name in room cards: Heading (20px semibold). Room description: Body (14px regular).
-- Two weights in use for prose: 400 (body, descriptions) and 600/700 (headings, CTAs, stat numbers). Label at 500 is used only for metadata chips and tab labels.
+- Room name in room cards: Heading (20px / 600). Room description: Body (14px / 400).
+- Metadata chips, tab labels, and filter badges: Label (12px / 400).
+- Exactly 2 weights in use: 400 (body, descriptions, code, labels, chips) and 600 (headings, CTAs, stat numbers, tab headings).
 
 Source: shadcn/ui defaults for dark theme; EXPL-01–04 (card/stat layouts); SNIP-01–03 (code blocks)
 
@@ -136,7 +138,7 @@ Components required for Phase 4. All are shadcn/ui official unless noted.
 | Component | Source | Notes |
 |-----------|--------|-------|
 | Home page activity widget | Custom (new) | Live stats: active rooms, agents online, messages relayed. Three-column layout. Fetches from Go API on mount. |
-| Explore page stats bar | Custom (new) | Three stat counters in a row. e2b-style: large bold number, small descriptor beneath. Teal accent on numbers. |
+| Explore page stats bar | Custom (new) | Three stat counters in a row. e2b-style: large semibold number (36px/600), small descriptor beneath (12px/400). Teal accent on numbers. |
 | Room card (explore grid) | Custom (new) | Name, description, agent count badge, tags, activity indicator. Hover reveals "View Room" link. |
 | Search + filter bar | shadcn Input + Badge (filter chips) | Text search left, tag filter chips right. |
 | Dashboard layout | shadcn Card + Separator | My Rooms section + Create Room section + quick-start link. Single page, no sub-navigation. |
@@ -182,6 +184,8 @@ Source: 04-CONTEXT.md D-03, D-04, D-05, D-07, D-08; REQUIREMENTS.md EXPL-01–04
 
 ### Copy-to-Clipboard
 - Copy button: ghost icon button (Clipboard icon from lucide-react). Default state: muted foreground. On hover: teal accent.
+- Snippet copy buttons: `aria-label="Copy snippet"` on the ghost icon button. Tooltip text: "Copy snippet" (appears on hover, matches aria-label).
+- Bearer token copy button: `aria-label="Copy bearer token"` on the ghost icon button. Tooltip text: "Copy bearer token".
 - On copy success: icon switches to Check, text (if present) changes to "Copied!". Reverts after 2000ms.
 - Bearer token: reveal/hide toggle is separate from copy. Copy works whether token is masked or revealed.
 
