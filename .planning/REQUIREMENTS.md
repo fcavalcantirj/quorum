@@ -111,56 +111,56 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| INFRA-05 | — | Pending |
-| ROOM-01 | — | Pending |
-| ROOM-02 | — | Pending |
-| ROOM-03 | — | Pending |
-| ROOM-04 | — | Pending |
-| ROOM-05 | — | Pending |
-| ROOM-06 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| AUTH-03 | — | Pending |
-| AUTH-04 | — | Pending |
-| AUTH-05 | — | Pending |
-| AUTH-06 | — | Pending |
-| AUTH-07 | — | Pending |
-| A2A-01 | — | Pending |
-| A2A-02 | — | Pending |
-| A2A-03 | — | Pending |
-| A2A-04 | — | Pending |
-| A2A-05 | — | Pending |
-| DISC-01 | — | Pending |
-| DISC-02 | — | Pending |
-| DISC-03 | — | Pending |
-| DISC-04 | — | Pending |
-| DISC-05 | — | Pending |
-| DISC-06 | — | Pending |
-| DISC-07 | — | Pending |
-| HOME-01 | — | Pending |
-| HOME-02 | — | Pending |
-| HOME-03 | — | Pending |
-| EXPL-01 | — | Pending |
-| EXPL-02 | — | Pending |
-| EXPL-03 | — | Pending |
-| EXPL-04 | — | Pending |
-| SNIP-01 | — | Pending |
-| SNIP-02 | — | Pending |
-| SNIP-03 | — | Pending |
-| WIRE-01 | — | Pending |
-| WIRE-02 | — | Pending |
-| WIRE-03 | — | Pending |
-| WIRE-04 | — | Pending |
+| INFRA-01 | Phase 1 | Pending |
+| INFRA-02 | Phase 1 | Pending |
+| INFRA-03 | Phase 3 | Pending |
+| INFRA-04 | Phase 4 | Pending |
+| INFRA-05 | Phase 1 | Pending |
+| ROOM-01 | Phase 1 | Pending |
+| ROOM-02 | Phase 1 | Pending |
+| ROOM-03 | Phase 1 | Pending |
+| ROOM-04 | Phase 1 | Pending |
+| ROOM-05 | Phase 1 | Pending |
+| ROOM-06 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Pending |
+| AUTH-02 | Phase 1 | Pending |
+| AUTH-03 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Pending |
+| AUTH-05 | Phase 1 | Pending |
+| AUTH-06 | Phase 1 | Pending |
+| AUTH-07 | Phase 1 | Pending |
+| A2A-01 | Phase 2 | Pending |
+| A2A-02 | Phase 3 | Pending |
+| A2A-03 | Phase 3 | Pending |
+| A2A-04 | Phase 2 | Pending |
+| A2A-05 | Phase 2 | Pending |
+| DISC-01 | Phase 2 | Pending |
+| DISC-02 | Phase 2 | Pending |
+| DISC-03 | Phase 2 | Pending |
+| DISC-04 | Phase 2 | Pending |
+| DISC-05 | Phase 2 | Pending |
+| DISC-06 | Phase 2 | Pending |
+| DISC-07 | Phase 2 | Pending |
+| HOME-01 | Phase 4 | Pending |
+| HOME-02 | Phase 4 | Pending |
+| HOME-03 | Phase 4 | Pending |
+| EXPL-01 | Phase 4 | Pending |
+| EXPL-02 | Phase 4 | Pending |
+| EXPL-03 | Phase 4 | Pending |
+| EXPL-04 | Phase 4 | Pending |
+| SNIP-01 | Phase 4 | Pending |
+| SNIP-02 | Phase 4 | Pending |
+| SNIP-03 | Phase 4 | Pending |
+| WIRE-01 | Phase 4 | Pending |
+| WIRE-02 | Phase 4 | Pending |
+| WIRE-03 | Phase 4 | Pending |
+| WIRE-04 | Phase 4 | Pending |
 
 **Coverage:**
 - v1 requirements: 44 total
-- Mapped to phases: 0
-- Unmapped: 44 ⚠️
+- Mapped to phases: 44
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 after roadmap creation*

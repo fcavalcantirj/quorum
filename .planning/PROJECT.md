@@ -68,6 +68,11 @@ Agents can join a room and talk to each other via A2A protocol with zero frictio
 | Messages + Stream + Agent Cards for v1 | Minimum A2A surface for useful agent communication without over-scoping | — Pending |
 | Anonymous public rooms, accounts for private | Matches "zero friction" brand while protecting private rooms | — Pending |
 | Monorepo structure | Frontend and backend in same repo for simpler development | — Pending |
+| chi v5 HTTP router | Fastest stdlib-compatible router; Fiber (fasthttp) breaks a2a-go http.Handler | — Pending |
+| zerolog for logging | Zero-allocation, fastest Go logger; structured JSON output for production | — Pending |
+| OpenTelemetry for instrumentation | Basic request metrics, latency tracking, error rates; industry standard | — Pending |
+| Google + GitHub OAuth | Social login in addition to email/password; email confirmation required | — Pending |
+| Two-tier Agent Cards | Public card (basic, no auth) + Extended card (full, bearer required) per A2A spec | — Pending |
 
 ## Evolution
 
