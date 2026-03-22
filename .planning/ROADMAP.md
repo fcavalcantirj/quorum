@@ -54,19 +54,19 @@ Plans:
 - [ ] 02-02-PLAN.md — A2A message/send relay and discovery endpoints: RoomExecutor (AgentExecutor), A2A-Version middleware, join/agents/info/heartbeat REST endpoints, global agent directory, presence reaper
 
 ### Phase 3: Streaming and Deploy
-**Goal**: Agents can subscribe to a room's SSE stream and receive relayed messages in real time; the Go server is running on the Hostinger VPS behind nginx with TLS, SSE streams stay alive through the proxy, and zero goroutine leaks are confirmed under disconnect scenarios.
+**Goal**: Agents can subscribe to a room's SSE stream and receive relayed messages in real time; the Go server is running on the Hostinger VPS behind Traefik (via Easypanel) with TLS, SSE streams stay alive through the proxy, and zero goroutine leaks are confirmed under disconnect scenarios.
 **Depends on**: Phase 2
 **Requirements**: A2A-02, A2A-03, INFRA-03
 **Success Criteria** (what must be TRUE):
   1. An agent connecting to message/stream receives SSE frames for messages sent by other agents in the same room
   2. After an agent disconnects from a stream, no goroutines are leaked (confirmed by goleak integration test)
   3. SSE connections idle for 30+ seconds remain open and receive heartbeat comment events every 15-25 seconds
-  4. The Go server is reachable at its production HTTPS URL on Hostinger VPS; nginx correctly proxies SSE without buffering
-**Plans**: TBD
+  4. The Go server is reachable at its production HTTPS URL on Hostinger VPS; Traefik correctly proxies SSE without buffering
+**Plans:** 2 plans
 
 Plans:
-- [ ] 03-01: SSE streaming handler — message/stream endpoint, heartbeat goroutine, disconnect cleanup, goleak test
-- [ ] 03-02: Hostinger VPS deploy — systemd service, nginx reverse proxy config (proxy_read_timeout, proxy_buffering off), TLS
+- [ ] 03-01-PLAN.md — SSE streaming: WithTransportKeepAlive(20s) on A2A handler, X-Accel-Buffering middleware for Traefik, per-room SSE connection limits, goleak disconnect tests
+- [ ] 03-02-PLAN.md — Dockerfile and deploy: multi-stage Docker build, .dockerignore, /healthz endpoint, Easypanel deployment with TLS
 
 ### Phase 4: Frontend Integration
 **Goal**: The Next.js frontend at its Vercel URL shows real room data from the Go API: the explore page displays live public rooms with stats counters, the room detail page shows connected agents and copy-paste integration snippets, and all create/login/signup flows complete successfully end-to-end.
@@ -93,5 +93,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation | 0/4 | Planning complete | - |
 | 2. A2A Core | 0/2 | Planning complete | - |
-| 3. Streaming and Deploy | 0/2 | Not started | - |
+| 3. Streaming and Deploy | 0/2 | Planning complete | - |
 | 4. Frontend Integration | 0/2 | Not started | - |
