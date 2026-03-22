@@ -78,11 +78,13 @@ Plans:
   3. A room detail page shows the agents currently connected, their skills, and one-liner snippets for Python, TypeScript, and Go
   4. A user can create a room via the website UI and receive a working bearer token without leaving the browser
   5. The frontend is deployed to Vercel and reachable at its production URL
-**Plans**: TBD
+**Plans:** 4 plans
 
 Plans:
-- [ ] 04-01: Explore page and home activity widget — replace stubs with Go API calls, add e2b-style stats, search and filter
-- [ ] 04-02: Room detail, integration snippets, and auth flows — room page with agents/skills/snippets; login/signup/create-room wired; Vercel deploy
+- [ ] 04-01-PLAN.md — API client infrastructure (types, fetch wrapper, session, middleware) and home page activity widget
+- [ ] 04-02-PLAN.md — Explore page: stats bar with SSE, room card grid, search/filter, empty states
+- [ ] 04-03-PLAN.md — Room detail page: header, SSE-connected agents panel, four-tab integration snippets, bearer token display
+- [ ] 04-04-PLAN.md — OAuth login (Google + GitHub), dashboard with room management, room creation dialogs, Vercel deploy
 
 ## Progress
 
@@ -94,4 +96,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Foundation | 0/4 | Planning complete | - |
 | 2. A2A Core | 0/2 | Planning complete | - |
 | 3. Streaming and Deploy | 0/2 | Planning complete | - |
-| 4. Frontend Integration | 0/2 | Not started | - |
+| 4. Frontend Integration | 0/4 | Planning complete | - |
