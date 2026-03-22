@@ -20,21 +20,22 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: Foundation
-**Goal**: The monorepo exists with the existing Next.js frontend imported into /web, the Go server boots and connects to Postgres, bearer token auth and rate limiting are in place on all endpoints, and room CRUD is backed by real database rows.
+**Goal**: The monorepo exists with the Go relay server in /relay. The Go server boots, connects to Postgres, and applies migrations on startup. Bearer token auth and rate limiting are in place on all endpoints. Room CRUD is backed by real database rows. OAuth login (Google + GitHub) works. Anonymous public room creation works without an account.
 **Depends on**: Nothing (first phase)
-**Requirements**: INFRA-01, INFRA-02, INFRA-05, AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06, AUTH-07, ROOM-01, ROOM-02, ROOM-03, ROOM-04, ROOM-05, ROOM-06
+**Requirements**: INFRA-01, INFRA-02, INFRA-05, AUTH-01, AUTH-02 (DROPPED), AUTH-03 (DROPPED), AUTH-04, AUTH-05, AUTH-06, AUTH-07, ROOM-01, ROOM-02, ROOM-03, ROOM-04, ROOM-05, ROOM-06
 **Success Criteria** (what must be TRUE):
   1. A developer can clone the repo and run the Go server locally; it connects to Postgres and applies migrations on startup
   2. A public room can be created via API without an account; the response includes a stable URL and a bearer token
   3. A private room cannot be created without a valid user session; attempting to do so returns 401
   4. All A2A-bound endpoints reject requests that supply a bearer token in the URL query string with 400
   5. The rate limiter blocks excessive room-creation requests from the same IP before any room is persisted
-**Plans**: TBD
+**Plans:** 4 plans
 
 Plans:
-- [ ] 01-01: Monorepo scaffold — import existing Next.js frontend zip into /web, create /relay Go module, wire CI
-- [ ] 01-02: Database schema and migrations — rooms, users, tokens tables via goose; pgx/v5 pool setup
-- [ ] 01-03: Go server skeleton — chi router, auth middleware (bearer token + JWT session), rate limiting, room CRUD REST API
+- [ ] 01-01-PLAN.md — Monorepo scaffold: Go module, dependencies, Docker Compose, Makefile, config
+- [ ] 01-02-PLAN.md — Database schema and migrations: rooms, users, refresh_tokens tables via goose; pgx/v5 pool; sqlc codegen
+- [ ] 01-03-PLAN.md — Chi router, bearer token auth, anonymous room creation (POST /rooms), room retrieval, query-string guard
+- [ ] 01-04-PLAN.md — OAuth login (Google + GitHub), JWT sessions, rate limiting, private room CRUD, room management
 
 ### Phase 2: A2A Core
 **Goal**: Agents can join a room with their bearer token, publish their Agent Card, discover other agents in the room by skill or tag, and exchange synchronous messages via the A2A message/send JSON-RPC method.
@@ -90,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 0/4 | Planning complete | - |
 | 2. A2A Core | 0/2 | Not started | - |
 | 3. Streaming and Deploy | 0/2 | Not started | - |
 | 4. Frontend Integration | 0/2 | Not started | - |
