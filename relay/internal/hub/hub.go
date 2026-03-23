@@ -82,7 +82,7 @@ func NewRoomHub(id RoomID, _ *PresenceRegistry, logger *slog.Logger, maxSSEPerRo
 		ID:          id,
 		subscribe:   make(chan subscribeCmd),
 		unsubscribe: make(chan unsubscribeCmd),
-		broadcast:   make(chan broadcastCmd),
+		broadcast:   make(chan broadcastCmd, 64),
 		events:      make(chan RoomEvent, 256),
 		done:        make(chan struct{}),
 		maxSSECount: int32(maxSSEPerRoom),

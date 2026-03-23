@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/a2aproject/a2a-go/a2a"
 	"github.com/go-chi/chi/v5"
@@ -111,6 +112,16 @@ func handleMessageSend(
 		return
 	}
 
+	// Extract agent name: prefer X-Agent-Name header (set by agents that joined),
+	// fall back to message role field.
+	agentName := r.Header.Get("X-Agent-Name")
+	if agentName == "" {
+		agentName = params.Message.Role
+	}
+	if agentName == "" {
+		agentName = "agent"
+	}
+
 	// Extract text content
 	var textContent string
 	for _, part := range params.Message.Parts {
@@ -122,11 +133,19 @@ func handleMessageSend(
 
 	// Store message for polling
 	if messages != nil && textContent != "" {
-		messages.Append(roomID, params.Message.Role, textContent)
+		messages.Append(roomID, agentName, textContent)
 	}
 
-	// NOTE: Hub broadcast skipped for MVP. Messages are stored for polling.
-	// SSE broadcast will be re-enabled when hub lifecycle is hardened.
+	// Broadcast to SSE subscribers if hub exists for this room.
+	if h := hubMgr.Get(roomID); h != nil {
+		h.Broadcast(hub.RoomEvent{
+			Type:      hub.EventMessage,
+			RoomID:    roomID,
+			AgentName: agentName,
+			Payload:   textContent,
+			Timestamp: time.Now(),
+		})
+	}
 
 	// Return immediately with A2A-compliant response
 	taskID := uuid.New().String()
