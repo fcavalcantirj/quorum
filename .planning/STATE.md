@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: "Checkpoint reached: 03-02 Task 2 — deploy to Easypanel (human-verify)"
-last_updated: "2026-03-23T02:39:49.930Z"
+stopped_at: Completed quick/260323-g8m (Tasks 1-2), checkpoint on Task 3 (OAuth)
+last_updated: "2026-03-23T15:12:25.333Z"
 progress:
   total_phases: 4
   completed_phases: 3
@@ -88,6 +88,7 @@ Recent decisions affecting current work:
 - [Phase 03]: atomic.Int32 sseCount in RoomHub — lock-free reads, writes inside hub goroutine for subscribe/unsubscribe
 - [Phase 03-streaming-deploy]: GOARCH=amd64 explicit in Dockerfile ENV — prevents ARM Mac builders from producing ARM binaries for x86_64 VPS
 - [Phase 03-streaming-deploy]: wget in HEALTHCHECK (not curl) — alpine:3.21 includes busybox wget; curl requires extra apk add
+- [Phase quick]: X-Agent-Name header for agent identity in message/send — shared room tokens cannot distinguish agents by bearer token alone
 
 ### Pending Todos
 
@@ -101,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T01:52:52.942Z
-Stopped at: Checkpoint reached: 03-02 Task 2 — deploy to Easypanel (human-verify)
+Last session: 2026-03-23T15:12:20.934Z
+Stopped at: Completed quick/260323-g8m (Tasks 1-2), checkpoint on Task 3 (OAuth)
 Resume file: None
