@@ -1,0 +1,39 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-03-23T14:37:31Z",
+  "phase": "04",
+  "phase_name": "frontend-integration",
+  "phase_dir": ".planning/phases/04-frontend-integration",
+  "plan": null,
+  "task": null,
+  "total_tasks": null,
+  "status": "paused",
+  "completed_tasks": [
+    {"id": "phase-01", "name": "Foundation — Go module, DB, auth, rooms", "status": "done"},
+    {"id": "phase-02", "name": "A2A Core — hub, presence, relay, discovery", "status": "done"},
+    {"id": "phase-03", "name": "Streaming & Deploy — SSE, Dockerfile, Easypanel", "status": "done"},
+    {"id": "phase-04-partial", "name": "Frontend Integration — wired to live API, NOT via GSD plans", "status": "partial"}
+  ],
+  "remaining_tasks": [
+    {"id": 1, "name": "Fix agent_name in messages — always shows 'user', should capture sender", "status": "not_started", "file": "relay/internal/relay/handler.go"},
+    {"id": 2, "name": "Remove mock data from explore page — hardcoded '1,247 rooms', fake categories", "status": "not_started", "file": "web/components/room-grid.tsx, web/components/room-filters.tsx"},
+    {"id": 3, "name": "Wire Create Room button on explore page to POST /rooms", "status": "not_started", "file": "web/components/room-grid.tsx or new CreateRoomDialog"},
+    {"id": 4, "name": "OAuth login end-to-end — GitHub OAuth → dashboard", "status": "not_started", "file": "web/components/login-form.tsx"},
+    {"id": 5, "name": "Make hub.broadcast channel buffered so SSE works without blocking", "status": "not_started", "file": "relay/internal/hub/hub.go line ~53"}
+  ],
+  "blockers": [],
+  "human_actions_pending": [
+    {"action": "Set up GitHub OAuth app for Quorum", "context": "GitHub OAuth needs client ID/secret configured in Easypanel env vars", "blocking": false},
+    {"action": "Set up Google OAuth app for Quorum", "context": "Google OAuth needs client ID/secret configured in Easypanel env vars", "blocking": false}
+  ],
+  "decisions": [
+    {"decision": "Bypassed a2a-go SDK for message/send handler", "rationale": "SDK's NewJSONRPCHandler hung on message/send — wrote direct JSON-RPC handler that returns instantly", "phase": "03"},
+    {"decision": "Skipped hub.Broadcast in message/send", "rationale": "Unbuffered broadcast channel blocks when no hub goroutine is active; messages stored in MessageStore for polling instead", "phase": "03"},
+    {"decision": "Used user's provided frontend as-is", "rationale": "User provided a polished 108-file Next.js frontend; modified existing components minimally to wire API data", "phase": "04"},
+    {"decision": "Phase 4 executed outside GSD plans", "rationale": "Original plans assumed blank slate; real frontend required adapting to existing components, not following stale plans", "phase": "04"},
+    {"decision": "NEXT_PUBLIC_API_URL trailing newline bug", "rationale": "Vercel env var had \\n suffix from echo pipe; fixed with printf to avoid newline", "phase": "04"}
+  ],
+  "uncommitted_files": [".gitignore"],
+  "next_action": "Fix agent_name in relay/internal/relay/handler.go — currently hardcoded to params.Message.Role ('user'), should extract from bearer token lookup or add sender_name to message params",
+  "context_notes": "MVP is live and working. Two agents successfully communicated through the relay. Frontend shows live agents and messages via SWR polling. The main rough edges are: (1) message sender name not captured, (2) explore page still has hardcoded mock categories/counts alongside real room data, (3) room creation not wired in frontend UI, (4) OAuth not tested e2e. Deploy trigger URL and Vercel env vars are all configured correctly now."
+}
