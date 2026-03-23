@@ -1,0 +1,26 @@
+# Test files
+*_test.go
+testdata/
+
+# Dev tools and config
+.env
+.env.*
+docker-compose.yml
+air.toml
+.air/
+
+# Documentation
+*.md
+LICENSE
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Git
+.git/
+.gitignore
+
+# Build artifacts
+tmp/

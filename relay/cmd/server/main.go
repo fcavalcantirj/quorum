@@ -193,6 +193,12 @@ func main() {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
+	// Docker HEALTHCHECK endpoint — no auth required, matches Dockerfile HEALTHCHECK path.
+	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"status":"ok"}`))
+	})
+
 	// OAuth routes — public, no JWT required.
 	r.Get("/auth/google/login", authHandler.GoogleLogin)
 	r.Get("/auth/google/callback", authHandler.GoogleCallback)
