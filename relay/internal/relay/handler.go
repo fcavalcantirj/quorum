@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/a2aproject/a2a-go/a2a"
 	"github.com/a2aproject/a2a-go/a2asrv"
@@ -28,6 +29,7 @@ func MountA2ARoutes(
 	// Dynamic A2A JSON-RPC handler — resolves room per request.
 	r.Route("/r/{slug}/a2a", func(r chi.Router) {
 		r.Use(middleware.A2AVersionGuard) // A2A-05: reject non-1.0 A2A versions
+		r.Use(middleware.SSENoBuffering)  // A2A-03: prevent Traefik from buffering SSE frames
 		r.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
 			slug := chi.URLParam(r, "slug")
 
@@ -51,7 +53,10 @@ func MountA2ARoutes(
 				handlerOpts = append(handlerOpts, a2asrv.WithLogger(logger))
 			}
 			requestHandler := a2asrv.NewHandler(executor, handlerOpts...)
-			jsonrpcHandler := a2asrv.NewJSONRPCHandler(requestHandler)
+			jsonrpcHandler := a2asrv.NewJSONRPCHandler(
+				requestHandler,
+				a2asrv.WithKeepAlive(20*time.Second), // A2A-03: SSE heartbeat every 20s (within 15-25s range)
+			)
 
 			// 5. Delegate to SDK handler.
 			jsonrpcHandler.ServeHTTP(w, r)
