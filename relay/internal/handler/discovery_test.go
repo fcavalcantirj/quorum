@@ -69,7 +69,7 @@ func buildDiscoveryHandler(t *testing.T, room db.Room) (*handler.DiscoveryHandle
 	t.Helper()
 	registry := hub.NewPresenceRegistry()
 	logger := slog.Default()
-	hubMgr := hub.NewHubManager(registry, logger)
+	hubMgr := hub.NewHubManager(registry, logger, 100)
 	return &handler.DiscoveryHandler{
 		Queries:  nil, // nil DB: tests stub DB via inline handlers
 		HubMgr:   hubMgr,
@@ -104,7 +104,7 @@ func TestJoinRoom_NoAuthHeader_Returns401(t *testing.T) {
 	room, _ := testRoomWithToken("test-room")
 	registry := hub.NewPresenceRegistry()
 	logger := slog.Default()
-	hubMgr := hub.NewHubManager(registry, logger)
+	hubMgr := hub.NewHubManager(registry, logger, 100)
 
 	h := &handler.DiscoveryHandler{
 		HubMgr:   hubMgr,
@@ -150,7 +150,7 @@ func TestJoinRoom_InvalidBearer_Returns401(t *testing.T) {
 	room, _ := testRoomWithToken("test-room")
 	registry := hub.NewPresenceRegistry()
 	logger := slog.Default()
-	hubMgr := hub.NewHubManager(registry, logger)
+	hubMgr := hub.NewHubManager(registry, logger, 100)
 
 	h := &handler.DiscoveryHandler{
 		HubMgr:   hubMgr,
@@ -193,7 +193,7 @@ func TestJoinRoom_InvalidBearer_Returns401(t *testing.T) {
 func TestListAgents_ReturnsPublicCards(t *testing.T) {
 	registry := hub.NewPresenceRegistry()
 	logger := slog.Default()
-	hubMgr := hub.NewHubManager(registry, logger)
+	hubMgr := hub.NewHubManager(registry, logger, 100)
 
 	_, _ = hubMgr, logger // prevent unused warning
 
@@ -381,7 +381,7 @@ func TestGetAgentCard_ValidBearerReturnsExtendedCard(t *testing.T) {
 func TestRoomInfo_ReturnsAgentCount(t *testing.T) {
 	registry := hub.NewPresenceRegistry()
 	logger := slog.Default()
-	hubMgr := hub.NewHubManager(registry, logger)
+	hubMgr := hub.NewHubManager(registry, logger, 100)
 
 	room, _ := testRoomWithToken("test-room")
 	roomID := hub.NewRoomID(room.ID.Bytes)
@@ -512,7 +512,7 @@ func TestReaper_EvictsExpiredAgents(t *testing.T) {
 
 	registry := hub.NewPresenceRegistry()
 	logger := slog.Default()
-	hubMgr := hub.NewHubManager(registry, logger)
+	hubMgr := hub.NewHubManager(registry, logger, 100)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

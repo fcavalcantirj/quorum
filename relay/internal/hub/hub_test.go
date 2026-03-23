@@ -56,7 +56,7 @@ func startHub(t *testing.T, h *hub.RoomHub, registry *hub.PresenceRegistry) cont
 func TestSubscribeBroadcastReceive(t *testing.T) {
 	registry := hub.NewPresenceRegistry()
 	roomID := hub.NewRoomID(uuid.New())
-	h := hub.NewRoomHub(roomID, registry, makeLogger())
+	h := hub.NewRoomHub(roomID, registry, makeLogger(), 100)
 	cancel := startHub(t, h, registry)
 	defer cancel()
 
@@ -88,7 +88,7 @@ func TestSubscribeBroadcastReceive(t *testing.T) {
 func TestBroadcastToMultipleSubscribers(t *testing.T) {
 	registry := hub.NewPresenceRegistry()
 	roomID := hub.NewRoomID(uuid.New())
-	h := hub.NewRoomHub(roomID, registry, makeLogger())
+	h := hub.NewRoomHub(roomID, registry, makeLogger(), 100)
 	cancel := startHub(t, h, registry)
 	defer cancel()
 
@@ -133,7 +133,7 @@ func TestBroadcastToMultipleSubscribers(t *testing.T) {
 func TestUnsubscribeStopsDelivery(t *testing.T) {
 	registry := hub.NewPresenceRegistry()
 	roomID := hub.NewRoomID(uuid.New())
-	h := hub.NewRoomHub(roomID, registry, makeLogger())
+	h := hub.NewRoomHub(roomID, registry, makeLogger(), 100)
 	cancel := startHub(t, h, registry)
 	defer cancel()
 
@@ -174,8 +174,8 @@ func TestTwoRoomIsolation(t *testing.T) {
 	idA := hub.NewRoomID(uuid.New())
 	idB := hub.NewRoomID(uuid.New())
 
-	hubA := hub.NewRoomHub(idA, registry, makeLogger())
-	hubB := hub.NewRoomHub(idB, registry, makeLogger())
+	hubA := hub.NewRoomHub(idA, registry, makeLogger(), 100)
+	hubB := hub.NewRoomHub(idB, registry, makeLogger(), 100)
 
 	ctxA, cancelA := context.WithCancel(context.Background())
 	ctxB, cancelB := context.WithCancel(context.Background())
@@ -303,7 +303,7 @@ func TestPresenceRegistryFilterBySkillID(t *testing.T) {
 // Test 8: HubManager GetOrCreate returns same instance on repeated calls.
 func TestHubManagerGetOrCreate(t *testing.T) {
 	registry := hub.NewPresenceRegistry()
-	manager := hub.NewHubManager(registry, makeLogger())
+	manager := hub.NewHubManager(registry, makeLogger(), 100)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

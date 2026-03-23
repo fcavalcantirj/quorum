@@ -18,8 +18,11 @@ type Config struct {
 	GitHubClientSecret     string `env:"GITHUB_CLIENT_SECRET" envDefault:""`
 	FrontendURL            string `env:"FRONTEND_URL" envDefault:"http://localhost:3000"`
 	BaseURL                string `env:"BASE_URL" envDefault:"http://localhost:8080"`
-	AnonRoomLimitPerHour   int    `env:"ANON_ROOM_LIMIT_PER_HOUR" envDefault:"2"`
-	AuthedRoomLimitPerHour int    `env:"AUTHED_ROOM_LIMIT_PER_HOUR" envDefault:"5"`
+	AnonRoomLimitPerHour   int `env:"ANON_ROOM_LIMIT_PER_HOUR" envDefault:"2"`
+	AuthedRoomLimitPerHour int `env:"AUTHED_ROOM_LIMIT_PER_HOUR" envDefault:"5"`
+	// SSE connection limits — protect VPS from resource exhaustion.
+	MaxSSEPerRoom int `env:"MAX_SSE_PER_ROOM" envDefault:"100"`
+	MaxSSETotal   int `env:"MAX_SSE_TOTAL" envDefault:"1000"`
 }
 
 // Load parses configuration from environment variables and returns a Config.

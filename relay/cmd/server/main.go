@@ -82,7 +82,7 @@ func main() {
 	// --- Hub infrastructure (A2A phase) ---
 	logger := slog.Default()
 	registry := hub.NewPresenceRegistry()
-	hubMgr := hub.NewHubManager(registry, logger)
+	hubMgr := hub.NewHubManager(registry, logger, cfg.MaxSSEPerRoom)
 
 	// DiscoveryHandler: REST endpoints for agent join, list, info, heartbeat.
 	discoveryH := &handler.DiscoveryHandler{

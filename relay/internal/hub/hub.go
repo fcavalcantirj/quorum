@@ -2,11 +2,17 @@ package hub
 
 import (
 	"context"
+	"errors"
 	"log/slog"
+	"sync/atomic"
 	"time"
 
 	"github.com/a2aproject/a2a-go/a2a"
 )
+
+// ErrRoomAtCapacity is returned by Subscribe when the room's SSE subscriber
+// limit (MaxSSEPerRoom) has been reached. Callers should respond with 503.
+var ErrRoomAtCapacity = errors.New("room SSE subscriber limit reached")
 
 // subscribeCmd is sent to the hub's command loop to add a subscriber.
 type subscribeCmd struct {
@@ -53,13 +59,25 @@ type RoomHub struct {
 	// done is closed when the hub goroutine exits (ctx canceled).
 	done chan struct{}
 
+	// sseCount tracks the number of active SSE subscribers atomically.
+	// Reads are lock-free; writes are done inside the hub goroutine for subscribe
+	// and unsubscribe, but atomic ops allow safe external reads if needed.
+	sseCount atomic.Int32
+
+	// maxSSECount is the per-room SSE subscriber limit from config.
+	// Immutable after construction. Subscribe returns ErrRoomAtCapacity when
+	// sseCount >= maxSSECount.
+	maxSSECount int32
+
 	logger *slog.Logger
 }
 
 // NewRoomHub creates a RoomHub for the given room. Call Run in a goroutine to start it.
 // The registry parameter is passed to Run — it is not stored on the hub to avoid
 // requiring a mutex (the hub goroutine is the only writer; registry has its own RWMutex).
-func NewRoomHub(id RoomID, _ *PresenceRegistry, logger *slog.Logger) *RoomHub {
+// maxSSEPerRoom sets the per-room SSE subscriber limit; Subscribe returns ErrRoomAtCapacity
+// when this limit is reached. Pass 0 to disable the limit (not recommended for production).
+func NewRoomHub(id RoomID, _ *PresenceRegistry, logger *slog.Logger, maxSSEPerRoom int) *RoomHub {
 	return &RoomHub{
 		ID:          id,
 		subscribe:   make(chan subscribeCmd),
@@ -67,6 +85,7 @@ func NewRoomHub(id RoomID, _ *PresenceRegistry, logger *slog.Logger) *RoomHub {
 		broadcast:   make(chan broadcastCmd),
 		events:      make(chan RoomEvent, 256),
 		done:        make(chan struct{}),
+		maxSSECount: int32(maxSSEPerRoom),
 		logger:      logger,
 	}
 }
@@ -85,9 +104,16 @@ func (h *RoomHub) Run(ctx context.Context, registry *PresenceRegistry) {
 	for {
 		select {
 		case cmd := <-h.subscribe:
+			// Enforce per-room SSE connection limit before accepting the subscriber.
+			if h.maxSSECount > 0 && h.sseCount.Load() >= h.maxSSECount {
+				cmd.resp <- ErrRoomAtCapacity
+				break
+			}
+
 			// Register new subscriber.
 			subscribers[cmd.agentName] = cmd.ch
 			registry.Add(h.ID, cmd.agentName, cmd.card)
+			h.sseCount.Add(1)
 
 			// Announce the joining agent to all existing subscribers (not itself).
 			evt := RoomEvent{
@@ -122,6 +148,7 @@ func (h *RoomHub) Run(ctx context.Context, registry *PresenceRegistry) {
 			delete(subscribers, cmd.agentName)
 			close(ch)
 			registry.Remove(h.ID, cmd.agentName)
+			h.sseCount.Add(-1)
 
 			// Announce departure to remaining subscribers.
 			evt := RoomEvent{
@@ -157,6 +184,7 @@ func (h *RoomHub) Run(ctx context.Context, registry *PresenceRegistry) {
 			for _, ch := range subscribers {
 				close(ch)
 			}
+			h.sseCount.Store(0)
 			close(h.done)
 			h.logger.Debug("hub stopped", "room", h.ID.String())
 			return

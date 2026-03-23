@@ -13,18 +13,22 @@ import (
 //
 // HubManager is safe for concurrent use.
 type HubManager struct {
-	mu       sync.RWMutex
-	hubs     map[RoomID]*RoomHub
-	registry *PresenceRegistry
-	logger   *slog.Logger
+	mu            sync.RWMutex
+	hubs          map[RoomID]*RoomHub
+	registry      *PresenceRegistry
+	logger        *slog.Logger
+	maxSSEPerRoom int // per-room SSE subscriber limit passed to each new RoomHub
 }
 
 // NewHubManager creates an empty HubManager backed by the given PresenceRegistry.
-func NewHubManager(registry *PresenceRegistry, logger *slog.Logger) *HubManager {
+// maxSSEPerRoom is the per-room SSE subscriber limit enforced by each RoomHub
+// (see ErrRoomAtCapacity). Pass 0 to disable the limit (not recommended for production).
+func NewHubManager(registry *PresenceRegistry, logger *slog.Logger, maxSSEPerRoom int) *HubManager {
 	return &HubManager{
-		hubs:     make(map[RoomID]*RoomHub),
-		registry: registry,
-		logger:   logger,
+		hubs:          make(map[RoomID]*RoomHub),
+		registry:      registry,
+		logger:        logger,
+		maxSSEPerRoom: maxSSEPerRoom,
 	}
 }
 
@@ -51,7 +55,7 @@ func (m *HubManager) GetOrCreate(ctx context.Context, id RoomID) *RoomHub {
 		return h
 	}
 
-	h := NewRoomHub(id, m.registry, m.logger)
+	h := NewRoomHub(id, m.registry, m.logger, m.maxSSEPerRoom)
 	m.hubs[id] = h
 	go h.Run(ctx, m.registry)
 	m.logger.Info("hub created", "room", id.String())
