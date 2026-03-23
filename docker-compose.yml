@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: quorum-postgres
+    environment:
+      POSTGRES_USER: quorum
+      POSTGRES_PASSWORD: quorum_dev
+      POSTGRES_DB: quorum_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - quorum_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U quorum -d quorum_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  quorum_pgdata:
