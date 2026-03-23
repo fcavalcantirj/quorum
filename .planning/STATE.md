@@ -100,6 +100,12 @@ None yet.
 - Hostinger VPS nginx SSE config (proxy_read_timeout, proxy_buffering off) needs validation in actual environment during Phase 3
 - Room capacity limit (max SSE connections per room) should be validated against actual Hostinger VPS RAM/file descriptor limits before setting
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260323-g8m | Post-MVP fixes: agent_name, mock data, create room, hub broadcast | 2026-03-23 | 8d76199 | [260323-g8m](./quick/260323-g8m-post-mvp-fixes-agent-name-mock-data-crea/) |
+
 ## Session Continuity
 
 Last session: 2026-03-23T15:12:20.934Z
