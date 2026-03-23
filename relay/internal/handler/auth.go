@@ -454,7 +454,7 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := map[string]interface{}{
+	resp := map[string]any{
 		"id":           userIDStr,
 		"email":        user.Email,
 		"display_name": user.DisplayName,

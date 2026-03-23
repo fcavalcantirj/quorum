@@ -15,15 +15,6 @@ import (
 	"github.com/fcavalcanti/quorum/relay/internal/token"
 )
 
-// pgUUIDFromStr parses a standard UUID string (8-4-4-4-12) into pgtype.UUID.
-func pgUUIDFromStr(s string) (pgtype.UUID, error) {
-	var u pgtype.UUID
-	if err := u.Scan(s); err != nil {
-		return pgtype.UUID{}, fmt.Errorf("invalid UUID %q: %w", s, err)
-	}
-	return u, nil
-}
-
 var (
 	ErrSlugTaken    = errors.New("room name is already taken")
 	ErrSlugInvalid  = errors.New("slug must be 3-40 chars, lowercase alphanumeric and hyphens, no leading/trailing hyphens")
