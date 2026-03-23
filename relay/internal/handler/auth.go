@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"golang.org/x/oauth2"
@@ -169,39 +171,13 @@ func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Issue refresh token
-	refreshToken, err := h.svc.CreateRefreshToken(ctx, user.ID)
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{
-			"error":   "refresh_token_failed",
-			"message": "Failed to create refresh token.",
-		})
-		return
-	}
-
-	// Set JWT access token cookie (30 days)
-	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt",
-		Value:    accessToken,
-		MaxAge:   30 * 24 * 3600,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/",
-	})
-
-	// Set refresh token cookie (90 days, path-restricted to /auth/refresh)
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		MaxAge:   90 * 24 * 3600,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/auth/refresh",
-	})
-
-	http.Redirect(w, r, h.frontendURL+"/dashboard", http.StatusFound)
+	// Redirect to frontend callback with token.
+	redirectURL := fmt.Sprintf("%s/api/auth/callback?token=%s&expiresAt=%s",
+		h.frontendURL,
+		accessToken,
+		url.QueryEscape(time.Now().Add(30*24*time.Hour).Format(time.RFC3339)),
+	)
+	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 // GitHubLogin initiates the GitHub OAuth flow.
@@ -319,36 +295,14 @@ func (h *AuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refreshToken, err := h.svc.CreateRefreshToken(ctx, user.ID)
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{
-			"error":   "refresh_token_failed",
-			"message": "Failed to create refresh token.",
-		})
-		return
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "jwt",
-		Value:    accessToken,
-		MaxAge:   30 * 24 * 3600,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/",
-	})
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "refresh_token",
-		Value:    refreshToken,
-		MaxAge:   90 * 24 * 3600,
-		HttpOnly: true,
-		Secure:   true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/auth/refresh",
-	})
-
-	http.Redirect(w, r, h.frontendURL+"/dashboard", http.StatusFound)
+	// Redirect to frontend callback with token as query param.
+	// The frontend route handler (/api/auth/callback) sets the cookie on the frontend domain.
+	redirectURL := fmt.Sprintf("%s/api/auth/callback?token=%s&expiresAt=%s",
+		h.frontendURL,
+		accessToken,
+		url.QueryEscape(time.Now().Add(30*24*time.Hour).Format(time.RFC3339)),
+	)
+	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
 // Logout revokes the refresh token and clears session cookies.
