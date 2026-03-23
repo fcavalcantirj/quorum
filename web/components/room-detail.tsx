@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import Link from "next/link"
 import useSWR from "swr"
+import { useSSE } from "@/hooks/use-sse"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -124,12 +125,34 @@ export function RoomDetail({ roomId, apiRoom }: RoomDetailProps) {
   const [copiedCode, setCopiedCode] = useState(false)
   const [copiedPrompt, setCopiedPrompt] = useState(false)
 
-  // Live data from API — polls every 5 seconds
-  const { data: liveAgents } = useSWR<ApiAgent[]>(
-    API_URL ? `${API_URL}/r/${roomId}/agents` : null, fetcher, { refreshInterval: 15000 }
+  // Live data from API — SWR for initial load, SSE for real-time updates
+  const { data: liveAgents, mutate: mutateAgents } = useSWR<ApiAgent[]>(
+    API_URL ? `${API_URL}/r/${roomId}/agents` : null, fetcher
   )
-  const { data: liveMessages } = useSWR<ApiMessage[]>(
-    API_URL ? `${API_URL}/r/${roomId}/messages` : null, fetcher, { refreshInterval: 10000 }
+  const { data: liveMessages, mutate: mutateMessages } = useSWR<ApiMessage[]>(
+    API_URL ? `${API_URL}/r/${roomId}/messages` : null, fetcher
+  )
+
+  // SSE connection for real-time push — refetches SWR data on events
+  const handleSSEEvent = useCallback((eventName: string) => {
+    return () => {
+      if (eventName === "message") {
+        mutateMessages()
+      } else if (eventName === "agent_joined" || eventName === "agent_left") {
+        mutateAgents()
+      }
+    }
+  }, [mutateAgents, mutateMessages])
+
+  const { connected: sseConnected } = useSSE(
+    API_URL ? `${API_URL}/r/${roomId}/events` : null,
+    {
+      onEvent: {
+        message: handleSSEEvent("message"),
+        agent_joined: handleSSEEvent("agent_joined"),
+        agent_left: handleSSEEvent("agent_left"),
+      },
+    }
   )
 
   // Use API data if provided, otherwise fall back to mock data
@@ -212,7 +235,15 @@ client.on('task', async (task) => {
                     Public
                   </Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">Created {room.createdAt}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground">Created {room.createdAt}</p>
+                  {sseConnected && (
+                    <span className="flex items-center gap-1 text-xs text-green-500">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+                      Live
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <p className="mt-4 text-muted-foreground max-w-2xl">{room.description}</p>
