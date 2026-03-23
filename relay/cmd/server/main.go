@@ -212,9 +212,11 @@ func main() {
 	r.Post("/auth/logout", authHandler.Logout)
 	r.Post("/auth/refresh", authHandler.RefreshToken)
 
-	// Anonymous room creation — rate-limited per IP, anon session tracked.
+	// Room creation — rate-limited per IP.
+	// JWT verifier extracts user ID if present (owned room), but doesn't require auth (anonymous allowed).
 	r.Group(func(r chi.Router) {
 		r.Use(mw.AnonSession)
+		r.Use(jwtauth.Verifier(tokenAuth))
 		r.Use(anonRateLimiter)
 		r.Post("/rooms", roomHandler.CreateRoom)
 	})

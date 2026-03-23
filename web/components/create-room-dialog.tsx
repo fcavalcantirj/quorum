@@ -16,7 +16,7 @@ import { apiFetch } from "@/lib/api"
 import { generateAgentPrompt } from "@/lib/agent-prompt"
 import type { CreateRoomResponse } from "@/lib/types"
 
-export function CreateRoomDialog({ onCreated }: { onCreated?: () => void }) {
+export function CreateRoomDialog({ onCreated, token }: { onCreated?: () => void; token?: string }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -35,8 +35,13 @@ export function CreateRoomDialog({ onCreated }: { onCreated?: () => void }) {
     setLoading(true)
     setError(null)
     try {
+      const headers: Record<string, string> = {}
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`
+      }
       const res = await apiFetch<CreateRoomResponse>("/rooms", {
         method: "POST",
+        headers,
         body: JSON.stringify({ name, public: isPublic, description }),
       })
       setResult(res)

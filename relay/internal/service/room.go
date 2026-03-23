@@ -65,9 +65,9 @@ func ValidateSlug(slug string) error {
 	return nil
 }
 
-// CreatePublicRoom creates an anonymous public room (ROOM-01).
-// Returns the created room and plaintext bearer token.
-func (s *RoomService) CreatePublicRoom(ctx context.Context, displayName, anonSessionID string) (*db.Room, string, error) {
+// CreatePublicRoom creates a public room.
+// If ownerID is valid, the room is owned (no expiry). Otherwise it's anonymous (expires in 3 days).
+func (s *RoomService) CreatePublicRoom(ctx context.Context, displayName, anonSessionID string, ownerID pgtype.UUID) (*db.Room, string, error) {
 	displayName = strings.TrimSpace(displayName)
 	if displayName == "" {
 		return nil, "", ErrNameRequired
@@ -83,15 +83,21 @@ func (s *RoomService) CreatePublicRoom(ctx context.Context, displayName, anonSes
 		return nil, "", fmt.Errorf("generate token: %w", err)
 	}
 
-	// Anonymous rooms expire after 3 days of inactivity (D-05)
-	expiresAt := pgtype.Timestamptz{
-		Time:  time.Now().Add(3 * 24 * time.Hour),
-		Valid: true,
-	}
-
+	// Owned rooms don't expire. Anonymous rooms expire after 3 days.
+	expiresAt := pgtype.Timestamptz{}
 	anonSID := pgtype.Text{}
-	if anonSessionID != "" {
-		anonSID = pgtype.Text{String: anonSessionID, Valid: true}
+
+	if ownerID.Valid {
+		// Owned room — no expiry, no anon session
+	} else {
+		// Anonymous room — 3 day expiry
+		expiresAt = pgtype.Timestamptz{
+			Time:  time.Now().Add(3 * 24 * time.Hour),
+			Valid: true,
+		}
+		if anonSessionID != "" {
+			anonSID = pgtype.Text{String: anonSessionID, Valid: true}
+		}
 	}
 
 	row, err := s.q.CreateRoom(ctx, db.CreateRoomParams{
@@ -100,6 +106,7 @@ func (s *RoomService) CreatePublicRoom(ctx context.Context, displayName, anonSes
 		Tags:               []string{},
 		TokenHash:          tokenHash,
 		IsPrivate:          false,
+		OwnerID:            ownerID,
 		AnonymousSessionID: anonSID,
 		ExpiresAt:          expiresAt,
 	})

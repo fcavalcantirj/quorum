@@ -110,7 +110,13 @@ func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 
 	anonSID := mw.GetAnonSessionID(r.Context())
 
-	room, plainToken, err := h.svc.CreatePublicRoom(r.Context(), req.Name, anonSID)
+	// Check if user is authenticated — if so, assign ownership
+	var ownerID pgtype.UUID
+	if userIDStr, ok := mw.UserIDFromContext(r.Context()); ok {
+		_ = ownerID.Scan(userIDStr)
+	}
+
+	room, plainToken, err := h.svc.CreatePublicRoom(r.Context(), req.Name, anonSID, ownerID)
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrSlugTaken):
