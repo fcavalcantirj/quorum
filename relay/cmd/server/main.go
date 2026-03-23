@@ -113,7 +113,7 @@ func main() {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("Retry-After", "3600")
 			w.WriteHeader(http.StatusTooManyRequests)
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
 				"error":       "rate_limit_exceeded",
 				"message":     "Too many rooms created. Try again in an hour.",
 				"retry_after": 3600,
@@ -132,7 +132,7 @@ func main() {
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("Retry-After", "3600")
 			w.WriteHeader(http.StatusTooManyRequests)
-			json.NewEncoder(w).Encode(map[string]interface{}{
+			json.NewEncoder(w).Encode(map[string]any{
 				"error":       "rate_limit_exceeded",
 				"message":     "Room creation rate limit reached.",
 				"retry_after": 3600,
