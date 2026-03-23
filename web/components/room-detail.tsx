@@ -126,10 +126,10 @@ export function RoomDetail({ roomId, apiRoom }: RoomDetailProps) {
 
   // Live data from API — polls every 5 seconds
   const { data: liveAgents } = useSWR<ApiAgent[]>(
-    API_URL ? `${API_URL}/r/${roomId}/agents` : null, fetcher, { refreshInterval: 5000 }
+    API_URL ? `${API_URL}/r/${roomId}/agents` : null, fetcher, { refreshInterval: 15000 }
   )
   const { data: liveMessages } = useSWR<ApiMessage[]>(
-    API_URL ? `${API_URL}/r/${roomId}/messages` : null, fetcher, { refreshInterval: 3000 }
+    API_URL ? `${API_URL}/r/${roomId}/messages` : null, fetcher, { refreshInterval: 10000 }
   )
 
   // Use API data if provided, otherwise fall back to mock data

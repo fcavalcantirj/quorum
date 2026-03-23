@@ -91,7 +91,7 @@ func (h *DiscoveryHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 		RoomID:     room.ID,
 		AgentName:  card.Name,
 		CardJson:   cardJSON,
-		TtlSeconds: 300, // 5 minute default TTL
+		TtlSeconds: 1800, // 30 minute TTL
 	})
 
 	// 7. Update room last_active_at per D-05.
