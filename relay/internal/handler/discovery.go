@@ -79,17 +79,11 @@ func (h *DiscoveryHandler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 5. Register in hub (Subscribe creates the hub if needed) and in-memory registry.
+	// 5. Register agent in the presence registry (NOT as an SSE subscriber).
+	// The hub subscription is for SSE streaming only. REST-based agents use
+	// the /messages polling endpoint instead.
 	roomID := hub.NewRoomID(room.ID.Bytes)
-	roomHub := h.HubMgr.GetOrCreate(r.Context(), roomID)
-	if _, err := roomHub.Subscribe(card.Name, &card); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": "failed to subscribe agent to room",
-		})
-		return
-	}
+	h.Registry.Add(roomID, card.Name, &card)
 
 	// 6. Persist to DB via UpsertAgentPresence.
 	cardJSON, _ := json.Marshal(card)
