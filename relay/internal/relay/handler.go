@@ -45,12 +45,9 @@ func MountA2ARoutes(
 	logger *slog.Logger,
 	messages *hub.MessageStore,
 ) {
-	r.Route("/r/{slug}/a2a", func(r chi.Router) {
-		r.Use(middleware.A2AVersionGuard)
-		r.Use(middleware.SSENoBuffering)
-		r.Post("/", handleA2ARequest(hubMgr, queries, logger, messages))
-		r.Post("/*", handleA2ARequest(hubMgr, queries, logger, messages))
-	})
+	a2aHandler := handleA2ARequest(hubMgr, queries, logger, messages)
+	wrappedHandler := middleware.A2AVersionGuard(a2aHandler)
+	r.Post("/r/{slug}/a2a", wrappedHandler.ServeHTTP)
 
 	// Room's relay Agent Card — DISC-05
 	r.Get("/r/{slug}/.well-known/agent-card.json", func(w http.ResponseWriter, r *http.Request) {
