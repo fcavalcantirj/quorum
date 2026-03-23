@@ -29,10 +29,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A private room cannot be created without a valid user session; attempting to do so returns 401
   4. All A2A-bound endpoints reject requests that supply a bearer token in the URL query string with 400
   5. The rate limiter blocks excessive room-creation requests from the same IP before any room is persisted
-**Plans:** 4 plans
+**Plans:** 1/4 plans executed
 
 Plans:
-- [ ] 01-01-PLAN.md — Monorepo scaffold: Go module, dependencies, Docker Compose, Makefile, config
+- [x] 01-01-PLAN.md — Monorepo scaffold: Go module, dependencies, Docker Compose, Makefile, config
 - [ ] 01-02-PLAN.md — Database schema and migrations: rooms, users, refresh_tokens tables via goose; pgx/v5 pool; sqlc codegen
 - [ ] 01-03-PLAN.md — Chi router, bearer token auth, anonymous room creation (POST /rooms), room retrieval, query-string guard
 - [ ] 01-04-PLAN.md — OAuth login (Google + GitHub), JWT sessions, rate limiting, private room CRUD, room management
@@ -93,7 +93,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/4 | Planning complete | - |
+| 1. Foundation | 1/4 | In Progress|  |
 | 2. A2A Core | 0/2 | Planning complete | - |
 | 3. Streaming and Deploy | 0/2 | Planning complete | - |
 | 4. Frontend Integration | 0/4 | Planning complete | - |
