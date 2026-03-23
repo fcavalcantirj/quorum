@@ -97,11 +97,11 @@ func (s *RoomService) CreatePublicRoom(ctx context.Context, displayName, anonSes
 	row, err := s.q.CreateRoom(ctx, db.CreateRoomParams{
 		Slug:               slug,
 		DisplayName:        displayName,
+		Tags:               []string{},
 		TokenHash:          tokenHash,
 		IsPrivate:          false,
 		AnonymousSessionID: anonSID,
 		ExpiresAt:          expiresAt,
-		// Description, Tags, OwnerID left as zero values (NULL / empty)
 	})
 	if err != nil {
 		var pgErr *pgconn.PgError

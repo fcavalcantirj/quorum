@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -89,7 +90,6 @@ func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch {
 		case errors.Is(err, service.ErrSlugTaken):
-			// D-03: "This name is taken" — user picks another name
 			writeJSON(w, http.StatusConflict, map[string]string{
 				"error":   "slug_taken",
 				"message": "This name is taken. Please choose another name.",
@@ -105,6 +105,7 @@ func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 				"message": "Room name is required.",
 			})
 		default:
+			slog.Error("create public room failed", "error", err)
 			writeJSON(w, http.StatusInternalServerError, map[string]string{
 				"error":   "internal_error",
 				"message": "Failed to create room.",
