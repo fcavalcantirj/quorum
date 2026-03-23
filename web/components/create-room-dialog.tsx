@@ -42,7 +42,16 @@ export function CreateRoomDialog({ onCreated }: { onCreated?: () => void }) {
       setResult(res)
       onCreated?.()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Room could not be created.")
+      const msg = err instanceof Error ? err.message : ""
+      if (msg.includes("slug_taken")) {
+        setError("This name is already taken. Try a different name.")
+      } else if (msg.includes("rate_limit")) {
+        setError("You've created too many rooms recently. Wait an hour and try again.")
+      } else if (msg.includes("invalid_slug")) {
+        setError("Name must be 3-40 characters: letters, numbers, and spaces.")
+      } else {
+        setError(msg || "Room could not be created.")
+      }
     } finally {
       setLoading(false)
     }
