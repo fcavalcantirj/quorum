@@ -149,20 +149,20 @@ interface RoomGridProps {
 
 export function RoomGrid({ apiRooms }: RoomGridProps) {
   // Use API rooms if available, fall back to mock data
-  const rooms = apiRooms
+  const rooms = apiRooms && apiRooms.length > 0
     ? apiRooms.map((r, i) => ({
-        id: r.slug || r.id,
-        name: r.name,
-        description: r.description,
+        id: r.slug,
+        name: r.display_name,
+        description: r.description || "",
         icon: iconPool[i % iconPool.length],
-        isPublic: r.public,
-        agentCount: r.agentCount,
-        activeNow: Math.max(1, Math.floor(r.agentCount * 0.6)),
-        messagesPerHour: Math.floor(r.messageCount / 24),
-        tags: r.tags,
+        isPublic: !r.is_private,
+        agentCount: r.agent_count || 0,
+        activeNow: r.agent_count || 0,
+        messagesPerHour: 0,
+        tags: r.tags || [],
         skills: [] as string[],
-        createdAt: r.createdAt,
-        url: `quorum.run/r/${r.slug || r.id}`,
+        createdAt: r.created_at,
+        url: `quorum.run/r/${r.slug}`,
       }))
     : mockRooms
   const [copiedId, setCopiedId] = useState<string | null>(null)

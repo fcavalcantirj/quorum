@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/fcavalcanti/quorum/relay/internal/db"
+	"github.com/fcavalcanti/quorum/relay/internal/hub"
 	mw "github.com/fcavalcanti/quorum/relay/internal/middleware"
 	"github.com/fcavalcanti/quorum/relay/internal/service"
 )
@@ -39,13 +41,14 @@ func parseUserUUID(w http.ResponseWriter, r *http.Request) (pgtype.UUID, bool) {
 
 // RoomHandler handles HTTP requests for room operations.
 type RoomHandler struct {
-	svc     *service.RoomService
-	baseURL string
+	svc      *service.RoomService
+	registry *hub.PresenceRegistry
+	baseURL  string
 }
 
 // NewRoomHandler creates a new RoomHandler wired to the provided service.
-func NewRoomHandler(svc *service.RoomService, baseURL string) *RoomHandler {
-	return &RoomHandler{svc: svc, baseURL: baseURL}
+func NewRoomHandler(svc *service.RoomService, baseURL string, registry *hub.PresenceRegistry) *RoomHandler {
+	return &RoomHandler{svc: svc, baseURL: baseURL, registry: registry}
 }
 
 type createRoomRequest struct {
@@ -68,9 +71,30 @@ type roomResponse struct {
 	Description string   `json:"description,omitempty"`
 	Tags        []string `json:"tags"`
 	IsPrivate   bool     `json:"is_private"`
+	AgentCount  int      `json:"agent_count"`
 	URL         string   `json:"url"`
 	A2AURL      string   `json:"a2a_url"`
 	CreatedAt   string   `json:"created_at"`
+}
+
+func (h *RoomHandler) buildRoomResponse(room *db.Room) roomResponse {
+	resp := roomResponse{
+		Slug:        room.Slug,
+		DisplayName: room.DisplayName,
+		Tags:        room.Tags,
+		IsPrivate:   room.IsPrivate,
+		URL:         h.baseURL + "/r/" + room.Slug,
+		A2AURL:      h.baseURL + "/r/" + room.Slug + "/a2a",
+		CreatedAt:   room.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
+	}
+	if room.Description.Valid {
+		resp.Description = room.Description.String
+	}
+	if h.registry != nil && room.ID.Valid {
+		roomID := hub.NewRoomID(room.ID.Bytes)
+		resp.AgentCount = h.registry.AgentCount(roomID)
+	}
+	return resp
 }
 
 // CreateRoom handles POST /rooms — anonymous public room creation.
@@ -147,20 +171,7 @@ func (h *RoomHandler) GetRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := roomResponse{
-		Slug:        room.Slug,
-		DisplayName: room.DisplayName,
-		Tags:        room.Tags,
-		IsPrivate:   room.IsPrivate,
-		URL:         h.baseURL + "/r/" + room.Slug,
-		A2AURL:      h.baseURL + "/r/" + room.Slug + "/a2a",
-		CreatedAt:   room.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
-	}
-	if room.Description.Valid {
-		resp.Description = room.Description.String
-	}
-
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(w, http.StatusOK, h.buildRoomResponse(room))
 }
 
 // ListPublicRooms handles GET /rooms with optional limit/offset pagination.
@@ -193,19 +204,8 @@ func (h *RoomHandler) ListPublicRooms(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]roomResponse, 0, len(rooms))
 	for _, room := range rooms {
-		rr := roomResponse{
-			Slug:        room.Slug,
-			DisplayName: room.DisplayName,
-			Tags:        room.Tags,
-			IsPrivate:   room.IsPrivate,
-			URL:         h.baseURL + "/r/" + room.Slug,
-			A2AURL:      h.baseURL + "/r/" + room.Slug + "/a2a",
-			CreatedAt:   room.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
-		}
-		if room.Description.Valid {
-			rr.Description = room.Description.String
-		}
-		resp = append(resp, rr)
+		r := room
+		resp = append(resp, h.buildRoomResponse(&r))
 	}
 
 	writeJSON(w, http.StatusOK, resp)
@@ -389,18 +389,7 @@ func (h *RoomHandler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := roomResponse{
-		Slug:        updated.Slug,
-		DisplayName: updated.DisplayName,
-		Tags:        updated.Tags,
-		IsPrivate:   updated.IsPrivate,
-		URL:         h.baseURL + "/r/" + updated.Slug,
-		A2AURL:      h.baseURL + "/r/" + updated.Slug + "/a2a",
-		CreatedAt:   updated.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
-	}
-	if updated.Description.Valid {
-		resp.Description = updated.Description.String
-	}
+	resp := h.buildRoomResponse(updated)
 
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -423,19 +412,8 @@ func (h *RoomHandler) ListMyRooms(w http.ResponseWriter, r *http.Request) {
 
 	resp := make([]roomResponse, 0, len(rooms))
 	for _, room := range rooms {
-		rr := roomResponse{
-			Slug:        room.Slug,
-			DisplayName: room.DisplayName,
-			Tags:        room.Tags,
-			IsPrivate:   room.IsPrivate,
-			URL:         h.baseURL + "/r/" + room.Slug,
-			A2AURL:      h.baseURL + "/r/" + room.Slug + "/a2a",
-			CreatedAt:   room.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
-		}
-		if room.Description.Valid {
-			rr.Description = room.Description.String
-		}
-		resp = append(resp, rr)
+		r := room
+		resp = append(resp, h.buildRoomResponse(&r))
 	}
 
 	writeJSON(w, http.StatusOK, resp)

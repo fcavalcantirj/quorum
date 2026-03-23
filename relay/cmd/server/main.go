@@ -124,8 +124,9 @@ func main() {
 	}
 
 	// --- Handlers ---
-	roomHandler := handler.NewRoomHandler(roomService, cfg.BaseURL)
+	roomHandler := handler.NewRoomHandler(roomService, cfg.BaseURL, registry)
 	authHandler := handler.NewAuthHandler(authService, googleOAuthConfig, githubOAuthConfig, cfg.FrontendURL)
+	statsHandler := handler.NewStatsHandler(queries, registry)
 
 	// --- JWT auth ---
 	tokenAuth := mw.NewJWTAuth(cfg.JWTSecret)
@@ -198,6 +199,9 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
+
+	// Platform stats — public, used by frontend activity widget.
+	r.Get("/stats", statsHandler.GetStats)
 
 	// OAuth routes — public, no JWT required.
 	r.Get("/auth/google/login", authHandler.GoogleLogin)

@@ -213,23 +213,23 @@ export function DashboardContent({ session }: { session: SessionPayload }) {
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-foreground group-hover:text-accent transition-colors">
-                            {room.name}
+                            {room.display_name}
                           </h3>
-                          <Badge variant={room.public ? "outline" : "secondary"} className="text-xs gap-1">
-                            {room.public ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-                            {room.public ? "Public" : "Private"}
+                          <Badge variant={!room.is_private ? "outline" : "secondary"} className="text-xs gap-1">
+                            {!room.is_private ? <Globe className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                            {!room.is_private ? "Public" : "Private"}
                           </Badge>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">/r/{room.slug}</p>
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Users className="h-3.5 w-3.5" />
-                        <span>{room.agentCount}</span>
+                        <span>{room.agent_count}</span>
                       </div>
                     </div>
                     <div className="mt-4 flex items-center gap-2">
                       <Button variant="outline" size="sm" className="flex-1 gap-2 text-xs" asChild>
-                        <Link href={`/explore/${room.slug || room.id}`}>
+                        <Link href={`/explore/${room.slug}`}>
                           <ExternalLink className="h-3.5 w-3.5" />
                           View Room
                         </Link>

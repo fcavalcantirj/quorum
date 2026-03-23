@@ -1,16 +1,15 @@
+// Types matching the actual Go API response shapes
+
 export interface Room {
-  id: string
-  name: string
   slug: string
-  description: string
-  public: boolean
-  agentCount: number
-  messageCount: number
+  display_name: string
+  description?: string
   tags: string[]
-  createdAt: string
-  updatedAt: string
-  ownerId: string | null
-  active: boolean
+  is_private: boolean
+  agent_count: number
+  url: string
+  a2a_url: string
+  created_at: string
 }
 
 export interface Agent {
@@ -30,26 +29,28 @@ export interface Stats {
 
 export interface RoomDetail extends Room {
   agents: Agent[]
-  bearerToken?: string
-  url: string
+  bearer_token?: string
 }
 
 export interface CreateRoomRequest {
   name: string
-  public: boolean
+  public?: boolean
   description?: string
   tags?: string[]
 }
 
 export interface CreateRoomResponse {
-  room: Room
+  slug: string
+  display_name: string
   url: string
-  token: string
+  a2a_url: string
+  bearer_token: string
+  expires_at?: string
 }
 
 export interface ApiError {
   error: string
-  code?: string
+  message?: string
 }
 
 export interface SessionPayload {

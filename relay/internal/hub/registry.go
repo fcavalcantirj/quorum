@@ -192,6 +192,17 @@ func (r *PresenceRegistry) AgentCount(roomID RoomID) int {
 	return len(r.agents[roomID])
 }
 
+// TotalAgentCount returns the total number of agents across all rooms.
+func (r *PresenceRegistry) TotalAgentCount() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	total := 0
+	for _, room := range r.agents {
+		total += len(room)
+	}
+	return total
+}
+
 // AllPublicAgents returns all presence records across all rooms. Used by the
 // cross-room directory endpoint (D-07). Callers are responsible for filtering
 // to public rooms before returning data to unauthenticated users.
