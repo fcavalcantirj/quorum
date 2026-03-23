@@ -25,6 +25,7 @@ func MountA2ARoutes(
 	queries *db.Queries,
 	baseURL string,
 	logger *slog.Logger,
+	messages *hub.MessageStore,
 ) {
 	// Dynamic A2A JSON-RPC handler — resolves room per request.
 	r.Route("/r/{slug}/a2a", func(r chi.Router) {
@@ -45,7 +46,7 @@ func MountA2ARoutes(
 			roomHub := hubMgr.GetOrCreate(r.Context(), roomID)
 
 			// 3. Create executor for this room.
-			executor := &RoomExecutor{Hub: roomHub, Registry: registry, RoomID: roomID}
+			executor := &RoomExecutor{Hub: roomHub, Registry: registry, RoomID: roomID, Messages: messages}
 
 			// 4. Build a2asrv handler chain.
 			var handlerOpts []a2asrv.RequestHandlerOption

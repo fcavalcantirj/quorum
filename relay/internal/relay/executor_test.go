@@ -223,7 +223,7 @@ func TestMountA2ARoutes_RouteRegistered(t *testing.T) {
 		})
 	})
 
-	relay.MountA2ARoutes(r, nil, nil, nil, "http://localhost:8080", nil)
+	relay.MountA2ARoutes(r, nil, nil, nil, "http://localhost:8080", nil, nil)
 
 	// Test: request WITHOUT A2A-Version header should be rejected by middleware
 	// before the handler is ever invoked (and before nil queries is dereferenced).
