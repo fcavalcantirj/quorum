@@ -89,14 +89,8 @@ func (h *SSEHandler) StreamEvents(w http.ResponseWriter, r *http.Request) {
 			case hub.EventMessage:
 				data.Type = "message"
 				data.AgentName = evt.AgentName
-				if msg, ok := evt.Payload.(map[string]any); ok {
-					if parts, ok := msg["parts"].([]any); ok && len(parts) > 0 {
-						if part, ok := parts[0].(map[string]any); ok {
-							if text, ok := part["text"].(string); ok {
-								data.Content = text
-							}
-						}
-					}
+				if text, ok := evt.Payload.(string); ok {
+					data.Content = text
 				}
 			default:
 				continue
