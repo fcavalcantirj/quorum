@@ -16,7 +16,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation userName={session.name} />
       <main className="pt-20">
         <DashboardContent session={session} token={token} />
       </main>

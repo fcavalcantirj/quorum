@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, User } from "lucide-react"
 
 const navLinks = [
   { href: "/explore", label: "Explore" },
@@ -12,7 +12,11 @@ const navLinks = [
   { href: "/blog", label: "Blog" },
 ]
 
-export function Navigation() {
+interface NavigationProps {
+  userName?: string | null
+}
+
+export function Navigation({ userName }: NavigationProps = {}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
@@ -42,9 +46,20 @@ export function Navigation() {
           <Button variant="ghost" size="sm" asChild>
             <Link href="https://github.com/quorum" target="_blank" rel="noopener noreferrer">GitHub</Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/login">Sign In</Link>
-          </Button>
+          {userName ? (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/dashboard" className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  {userName}
+                </Link>
+              </Button>
+            </>
+          ) : (
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/login">Sign In</Link>
+            </Button>
+          )}
           <Button size="sm" asChild>
             <Link href="/explore">Get Started</Link>
           </Button>
@@ -82,9 +97,15 @@ export function Navigation() {
               <Button variant="ghost" size="sm" asChild>
                 <Link href="https://github.com/quorum" target="_blank" rel="noopener noreferrer">GitHub</Link>
               </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/login">Sign In</Link>
-              </Button>
+              {userName ? (
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/dashboard">{userName}</Link>
+                </Button>
+              ) : (
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/login">Sign In</Link>
+                </Button>
+              )}
               <Button size="sm" asChild>
                 <Link href="/explore">Get Started</Link>
               </Button>

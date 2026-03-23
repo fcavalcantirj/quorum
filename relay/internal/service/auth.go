@@ -57,9 +57,8 @@ func (s *AuthService) UpsertOAuthUser(ctx context.Context, email, displayName, a
 }
 
 // CreateSession issues a signed HS256 JWT access token valid for 30 days.
-// The token carries sub=userID (standard UUID string format) and is signed with s.jwtSecret.
-func (s *AuthService) CreateSession(userID pgtype.UUID) (string, error) {
-	// Convert pgtype.UUID bytes to standard 8-4-4-4-12 UUID string representation.
+// The token carries sub, email, name claims and is signed with s.jwtSecret.
+func (s *AuthService) CreateSession(userID pgtype.UUID, email, name string) (string, error) {
 	b := userID.Bytes
 	userIDStr := fmt.Sprintf(
 		"%08x-%04x-%04x-%04x-%012x",
@@ -68,9 +67,11 @@ func (s *AuthService) CreateSession(userID pgtype.UUID) (string, error) {
 
 	now := time.Now()
 	claims := jwt.MapClaims{
-		"sub": userIDStr,
-		"iat": now.Unix(),
-		"exp": now.Add(30 * 24 * time.Hour).Unix(),
+		"sub":   userIDStr,
+		"email": email,
+		"name":  name,
+		"iat":   now.Unix(),
+		"exp":   now.Add(30 * 24 * time.Hour).Unix(),
 	}
 
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -131,8 +132,14 @@ func (s *AuthService) RefreshSession(ctx context.Context, refreshPlaintext strin
 		return "", "", fmt.Errorf("revoke refresh token: %w", err)
 	}
 
+	// Fetch user for JWT claims
+	user, err := s.queries.GetUserByID(ctx, row.UserID)
+	if err != nil {
+		return "", "", fmt.Errorf("get user for refresh: %w", err)
+	}
+
 	// Issue new access token
-	newAccessToken, err = s.CreateSession(row.UserID)
+	newAccessToken, err = s.CreateSession(row.UserID, user.Email, user.DisplayName)
 	if err != nil {
 		return "", "", fmt.Errorf("create session: %w", err)
 	}

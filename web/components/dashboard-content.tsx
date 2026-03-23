@@ -15,8 +15,9 @@ const authFetcher = (url: string, token: string) =>
 
 export function DashboardContent({ session, token }: { session: SessionPayload; token: string }) {
   const { data: rooms, error, isLoading, mutate } = useSWR<Room[]>(
-    [`${process.env.NEXT_PUBLIC_API_URL}/me/rooms`, token],
-    ([url, t]: [string, string]) => authFetcher(url, t)
+    token ? [`${process.env.NEXT_PUBLIC_API_URL}/me/rooms`, token] : null,
+    ([url, t]: [string, string]) => authFetcher(url, t),
+    { revalidateOnFocus: false, errorRetryCount: 3 }
   )
 
   return (

@@ -162,7 +162,7 @@ func (h *AuthHandler) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Issue JWT access token
-	accessToken, err := h.svc.CreateSession(user.ID)
+	accessToken, err := h.svc.CreateSession(user.ID, user.Email, user.DisplayName)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{
 			"error":   "session_failed",
@@ -286,7 +286,7 @@ func (h *AuthHandler) GitHubCallback(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	accessToken, err := h.svc.CreateSession(user.ID)
+	accessToken, err := h.svc.CreateSession(user.ID, user.Email, user.DisplayName)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{
 			"error":   "session_failed",
