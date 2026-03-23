@@ -1,3 +1,4 @@
+import { cookies } from "next/headers"
 import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { DashboardContent } from "@/components/dashboard-content"
@@ -10,12 +11,14 @@ export const metadata = {
 
 export default async function DashboardPage() {
   const session = await verifySession()
+  const cookieStore = await cookies()
+  const token = cookieStore.get("session")?.value || ""
 
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       <main className="pt-20">
-        <DashboardContent session={session} />
+        <DashboardContent session={session} token={token} />
       </main>
       <Footer />
     </div>

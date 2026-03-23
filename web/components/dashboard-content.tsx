@@ -28,8 +28,8 @@ import {
 import { apiFetch } from "@/lib/api"
 import type { Room, CreateRoomResponse, SessionPayload } from "@/lib/types"
 
-const fetcher = (url: string) =>
-  fetch(url, { credentials: "include" }).then((r) => r.json())
+const authFetcher = (url: string, token: string) =>
+  fetch(url, { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json())
 
 function CreateRoomDialog({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false)
@@ -161,10 +161,10 @@ function CreateRoomDialog({ onCreated }: { onCreated?: () => void }) {
   )
 }
 
-export function DashboardContent({ session }: { session: SessionPayload }) {
+export function DashboardContent({ session, token }: { session: SessionPayload; token: string }) {
   const { data: rooms, error, isLoading, mutate } = useSWR<Room[]>(
-    `${process.env.NEXT_PUBLIC_API_URL}/users/me/rooms`,
-    fetcher
+    [`${process.env.NEXT_PUBLIC_API_URL}/me/rooms`, token],
+    ([url, t]: [string, string]) => authFetcher(url, t)
   )
 
   return (
