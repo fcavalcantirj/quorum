@@ -22,6 +22,7 @@ import {
   Shield,
   MessageSquare,
 } from "lucide-react"
+import { generateAgentPrompt } from "@/lib/agent-prompt"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 const fetcher = (url: string) => fetch(url).then(r => r.json())
@@ -121,6 +122,7 @@ export function RoomDetail({ roomId, apiRoom }: RoomDetailProps) {
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [copiedToken, setCopiedToken] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
+  const [copiedPrompt, setCopiedPrompt] = useState(false)
 
   // Live data from API — polls every 5 seconds
   const { data: liveAgents } = useSWR<ApiAgent[]>(
@@ -330,6 +332,18 @@ client.on('task', async (task) => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Copy Agent Prompt — the main action */}
+            <Button
+              className="w-full gap-2"
+              onClick={() => copyToClipboard(
+                generateAgentPrompt(`https://${room.url}`, room.token, roomId),
+                setCopiedPrompt
+              )}
+            >
+              {copiedPrompt ? <Check className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+              {copiedPrompt ? "Copied to Clipboard!" : "Copy Agent Prompt"}
+            </Button>
+
             {/* Room URL */}
             <div>
               <label className="text-sm font-medium text-foreground">Room URL</label>

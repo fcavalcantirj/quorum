@@ -11,8 +11,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Plus, Copy, Check } from "lucide-react"
+import { Plus, Copy, Check, Bot } from "lucide-react"
 import { apiFetch } from "@/lib/api"
+import { generateAgentPrompt } from "@/lib/agent-prompt"
 import type { CreateRoomResponse } from "@/lib/types"
 
 export function CreateRoomDialog({ onCreated }: { onCreated?: () => void }) {
@@ -25,6 +26,7 @@ export function CreateRoomDialog({ onCreated }: { onCreated?: () => void }) {
   const [result, setResult] = useState<CreateRoomResponse | null>(null)
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [copiedToken, setCopiedToken] = useState(false)
+  const [copiedPrompt, setCopiedPrompt] = useState(false)
 
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40)
 
@@ -76,12 +78,25 @@ export function CreateRoomDialog({ onCreated }: { onCreated?: () => void }) {
         {result ? (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Room created! Share the URL and token with your agents.
+              Room created! Copy the agent prompt below and paste it into any AI agent.
             </p>
+
+            {/* Copy Agent Prompt — the main action */}
+            <Button
+              className="w-full gap-2"
+              onClick={() => copy(
+                generateAgentPrompt(result.url, result.bearer_token, result.slug),
+                setCopiedPrompt
+              )}
+            >
+              {copiedPrompt ? <Check className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+              {copiedPrompt ? "Copied to Clipboard!" : "Copy Agent Prompt"}
+            </Button>
+
             <div className="space-y-2">
               <label className="text-xs text-muted-foreground">Room URL</label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono">{result.url}</code>
+                <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono text-xs break-all">{result.url}</code>
                 <Button variant="outline" size="sm" onClick={() => copy(result.url, setCopiedUrl)}>
                   {copiedUrl ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
@@ -90,13 +105,13 @@ export function CreateRoomDialog({ onCreated }: { onCreated?: () => void }) {
             <div className="space-y-2">
               <label className="text-xs text-muted-foreground">Bearer Token</label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono">{result.bearer_token}</code>
+                <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono text-xs break-all">{result.bearer_token}</code>
                 <Button variant="outline" size="sm" onClick={() => copy(result.bearer_token, setCopiedToken)}>
                   {copiedToken ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
-            <Button className="w-full" onClick={() => setOpen(false)}>Done</Button>
+            <Button variant="outline" className="w-full" onClick={() => setOpen(false)}>Done</Button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
