@@ -26,13 +26,18 @@ import (
 	"github.com/fcavalcanti/quorum/relay/internal/config"
 	"github.com/fcavalcanti/quorum/relay/internal/db"
 	"github.com/fcavalcanti/quorum/relay/internal/handler"
+	"github.com/fcavalcanti/quorum/relay/internal/hub"
 	mw "github.com/fcavalcanti/quorum/relay/internal/middleware"
 	"github.com/fcavalcanti/quorum/relay/internal/migrations"
+	"github.com/fcavalcanti/quorum/relay/internal/presence"
+	"github.com/fcavalcanti/quorum/relay/internal/relay"
 	"github.com/fcavalcanti/quorum/relay/internal/service"
 )
 
 func main() {
-	ctx := context.Background()
+	// Root context is cancelled on SIGINT/SIGTERM — propagated to hub goroutines and reaper.
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	defer cancelCtx()
 
 	cfg, err := config.Load()
 	if err != nil {
@@ -73,6 +78,29 @@ func main() {
 
 	// Create the sqlc Queries instance backed by the pool.
 	queries := db.New(pool)
+
+	// --- Hub infrastructure (A2A phase) ---
+	logger := slog.Default()
+	registry := hub.NewPresenceRegistry()
+	hubMgr := hub.NewHubManager(registry, logger)
+
+	// DiscoveryHandler: REST endpoints for agent join, list, info, heartbeat.
+	discoveryH := &handler.DiscoveryHandler{
+		Queries:  queries,
+		HubMgr:   hubMgr,
+		Registry: registry,
+		Logger:   logger,
+	}
+
+	// AgentHandler: global agent directory across public rooms.
+	agentH := &handler.AgentHandler{
+		Queries:  queries,
+		Registry: registry,
+		Logger:   logger,
+	}
+
+	// Start background presence reaper (evicts TTL-expired agents every 60s).
+	presence.StartReaper(ctx, queries, registry, hubMgr, logger)
 
 	// --- Services ---
 	roomService := service.NewRoomService(queries)
@@ -206,6 +234,22 @@ func main() {
 		r.Patch("/rooms/{slug}", roomHandler.UpdateRoom)
 	})
 
+	// --- A2A protocol routes (phase 02) ---
+
+	// Mount A2A JSON-RPC handler and relay agent card (DISC-05).
+	// Registers: POST /r/{slug}/a2a (A2A JSON-RPC), GET /r/{slug}/.well-known/agent-card.json
+	relay.MountA2ARoutes(r, hubMgr, registry, queries, cfg.BaseURL, logger)
+
+	// Discovery REST endpoints — bearer auth handled in handler for join/heartbeat.
+	r.Post("/r/{slug}/join", discoveryH.JoinRoom)
+	r.Get("/r/{slug}/agents", discoveryH.ListAgents)
+	r.Get("/r/{slug}/agents/{name}", discoveryH.GetAgentCard)
+	r.Get("/r/{slug}/info", discoveryH.RoomInfo)
+	r.Post("/r/{slug}/heartbeat", discoveryH.Heartbeat)
+
+	// Global agent directory — public, returns agents from public rooms only.
+	r.Get("/agents", agentH.GlobalDirectory)
+
 	// Start HTTP server with graceful shutdown.
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	srv := &http.Server{
@@ -223,6 +267,8 @@ func main() {
 	go func() {
 		<-quit
 		slog.Info("quorum relay shutting down")
+		// Cancel root context — stops hub goroutines and reaper.
+		cancelCtx()
 		shutCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(shutCtx); err != nil {
