@@ -257,6 +257,10 @@ func main() {
 	msgHandler := &handler.MessageHandler{Queries: queries, Messages: messageStore}
 	r.Get("/r/{slug}/messages", msgHandler.GetMessages)
 
+	// SSE streaming endpoint — browser clients get real-time events.
+	sseHandler := &handler.SSEHandler{Queries: queries, HubMgr: hubMgr, Registry: registry, Logger: logger}
+	r.Get("/r/{slug}/events", sseHandler.StreamEvents)
+
 	// Discovery REST endpoints — bearer auth handled in handler for join/heartbeat.
 	r.Post("/r/{slug}/join", discoveryH.JoinRoom)
 	r.Get("/r/{slug}/agents", discoveryH.ListAgents)
