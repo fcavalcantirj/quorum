@@ -11,15 +11,15 @@
 - [x] **INFRA-02**: Postgres database schema with migrations (rooms, agents, tokens, users)
 - [ ] **INFRA-03**: Go server deployed on Hostinger VPS with HTTPS (TLS termination)
 - [ ] **INFRA-04**: Next.js frontend deployed on Vercel
-- [ ] **INFRA-05**: Rate limiting middleware on all public endpoints
+- [x] **INFRA-05**: Rate limiting middleware on all public endpoints
 
 ### Room Management
 
 - [x] **ROOM-01**: User can create a public room without an account (anonymous creation)
-- [ ] **ROOM-02**: User can create a private room (requires account)
+- [x] **ROOM-02**: User can create a private room (requires account)
 - [x] **ROOM-03**: Room creation returns a stable URL and bearer token
-- [ ] **ROOM-04**: Room owner can delete their room
-- [ ] **ROOM-05**: Room owner can add tags/metadata to their room (domain, description)
+- [x] **ROOM-04**: Room owner can delete their room
+- [x] **ROOM-05**: Room owner can add tags/metadata to their room (domain, description)
 - [x] **ROOM-06**: Room URL is permanent and never changes once created
 
 ### Authentication
@@ -27,10 +27,10 @@
 - [x] **AUTH-01**: Agent authenticates to a room via bearer token in Authorization header
 - [x] **AUTH-02**: User can create an account with email and password
 - [x] **AUTH-03**: User receives email confirmation link and must verify before full access
-- [ ] **AUTH-04**: User can log in via Google OAuth
-- [ ] **AUTH-05**: User can log in via GitHub OAuth
-- [ ] **AUTH-06**: User can log in and receive a session token (JWT)
-- [ ] **AUTH-07**: Private room creation requires authenticated user session
+- [x] **AUTH-04**: User can log in via Google OAuth
+- [x] **AUTH-05**: User can log in via GitHub OAuth
+- [x] **AUTH-06**: User can log in and receive a session token (JWT)
+- [x] **AUTH-07**: Private room creation requires authenticated user session
 
 ### A2A Protocol — Messages
 
@@ -115,20 +115,20 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-02 | Phase 1 | Complete |
 | INFRA-03 | Phase 3 | Pending |
 | INFRA-04 | Phase 4 | Pending |
-| INFRA-05 | Phase 1 | Pending |
+| INFRA-05 | Phase 1 | Complete |
 | ROOM-01 | Phase 1 | Complete |
-| ROOM-02 | Phase 1 | Pending |
+| ROOM-02 | Phase 1 | Complete |
 | ROOM-03 | Phase 1 | Complete |
-| ROOM-04 | Phase 1 | Pending |
-| ROOM-05 | Phase 1 | Pending |
+| ROOM-04 | Phase 1 | Complete |
+| ROOM-05 | Phase 1 | Complete |
 | ROOM-06 | Phase 1 | Complete |
 | AUTH-01 | Phase 1 | Complete |
 | AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Complete |
-| AUTH-04 | Phase 1 | Pending |
-| AUTH-05 | Phase 1 | Pending |
-| AUTH-06 | Phase 1 | Pending |
-| AUTH-07 | Phase 1 | Pending |
+| AUTH-04 | Phase 1 | Complete |
+| AUTH-05 | Phase 1 | Complete |
+| AUTH-06 | Phase 1 | Complete |
+| AUTH-07 | Phase 1 | Complete |
 | A2A-01 | Phase 2 | Pending |
 | A2A-02 | Phase 3 | Pending |
 | A2A-03 | Phase 3 | Pending |

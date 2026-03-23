@@ -12,7 +12,7 @@ Quorum is built in four phases, derived from the natural dependency order of its
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Monorepo, existing frontend import, database schema, Go server skeleton, auth, and rate limiting
+- [x] **Phase 1: Foundation** - Monorepo, existing frontend import, database schema, Go server skeleton, auth, and rate limiting (completed 2026-03-23)
 - [ ] **Phase 2: A2A Core** - Room event loop, message/send relay, agent card publishing, and room-scoped discovery
 - [ ] **Phase 3: Streaming and Deploy** - SSE streaming, goroutine cleanup, nginx config, and Go server live on Hostinger
 - [ ] **Phase 4: Frontend Integration** - Wire frontend stubs to real API, explore directory, integration snippets, and Vercel deploy
@@ -29,13 +29,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. A private room cannot be created without a valid user session; attempting to do so returns 401
   4. All A2A-bound endpoints reject requests that supply a bearer token in the URL query string with 400
   5. The rate limiter blocks excessive room-creation requests from the same IP before any room is persisted
-**Plans:** 3/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 01-01-PLAN.md — Monorepo scaffold: Go module, dependencies, Docker Compose, Makefile, config
 - [x] 01-02-PLAN.md — Database schema and migrations: rooms, users, refresh_tokens tables via goose; pgx/v5 pool; sqlc codegen
 - [x] 01-03-PLAN.md — Chi router, bearer token auth, anonymous room creation (POST /rooms), room retrieval, query-string guard
-- [ ] 01-04-PLAN.md — OAuth login (Google + GitHub), JWT sessions, rate limiting, private room CRUD, room management
+- [x] 01-04-PLAN.md — OAuth login (Google + GitHub), JWT sessions, rate limiting, private room CRUD, room management
 
 ### Phase 2: A2A Core
 **Goal**: Agents can join a room with their bearer token, publish their Agent Card, discover other agents in the room by skill or tag, and exchange synchronous messages via the A2A message/send JSON-RPC method.
@@ -93,7 +93,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 3/4 | In Progress|  |
+| 1. Foundation | 4/4 | Complete   | 2026-03-23 |
 | 2. A2A Core | 0/2 | Planning complete | - |
 | 3. Streaming and Deploy | 0/2 | Planning complete | - |
 | 4. Frontend Integration | 0/4 | Planning complete | - |
