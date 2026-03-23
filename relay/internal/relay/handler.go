@@ -7,17 +7,35 @@ import (
 	"time"
 
 	"github.com/a2aproject/a2a-go/a2a"
-	"github.com/a2aproject/a2a-go/a2asrv"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 
 	"github.com/fcavalcanti/quorum/relay/internal/db"
 	"github.com/fcavalcanti/quorum/relay/internal/hub"
 	"github.com/fcavalcanti/quorum/relay/internal/middleware"
 )
 
-// MountA2ARoutes registers the A2A JSON-RPC handler and room relay card on the chi router.
-// Uses a single dynamic handler that resolves the room from the {slug} URL param per request,
-// avoiding dynamic route registration (one handler handles all rooms).
+// jsonRPCRequest represents a JSON-RPC 2.0 request.
+type jsonRPCRequest struct {
+	JSONRPC string          `json:"jsonrpc"`
+	Method  string          `json:"method"`
+	ID      any             `json:"id"`
+	Params  json.RawMessage `json:"params"`
+}
+
+// messageSendParams matches A2A message/send params.
+type messageSendParams struct {
+	Message struct {
+		MessageID string `json:"messageId"`
+		Role      string `json:"role"`
+		Parts     []struct {
+			Kind string `json:"kind"`
+			Text string `json:"text"`
+		} `json:"parts"`
+	} `json:"message"`
+}
+
+// MountA2ARoutes registers the A2A relay handler and agent card endpoint.
 func MountA2ARoutes(
 	r chi.Router,
 	hubMgr *hub.HubManager,
@@ -27,44 +45,14 @@ func MountA2ARoutes(
 	logger *slog.Logger,
 	messages *hub.MessageStore,
 ) {
-	// Dynamic A2A JSON-RPC handler — resolves room per request.
 	r.Route("/r/{slug}/a2a", func(r chi.Router) {
-		r.Use(middleware.A2AVersionGuard) // A2A-05: reject non-1.0 A2A versions
-		r.Use(middleware.SSENoBuffering)  // A2A-03: prevent Traefik from buffering SSE frames
-		r.HandleFunc("/*", func(w http.ResponseWriter, r *http.Request) {
-			slug := chi.URLParam(r, "slug")
-
-			// 1. Resolve room from DB.
-			room, err := queries.GetRoomBySlug(r.Context(), slug)
-			if err != nil {
-				writeJSONRPCError(w, -32603, "room not found")
-				return
-			}
-			roomID := hub.NewRoomID(room.ID.Bytes)
-
-			// 2. Get or create hub for this room.
-			roomHub := hubMgr.GetOrCreate(r.Context(), roomID)
-
-			// 3. Create executor for this room.
-			executor := &RoomExecutor{Hub: roomHub, Registry: registry, RoomID: roomID, Messages: messages}
-
-			// 4. Build a2asrv handler chain.
-			var handlerOpts []a2asrv.RequestHandlerOption
-			if logger != nil {
-				handlerOpts = append(handlerOpts, a2asrv.WithLogger(logger))
-			}
-			requestHandler := a2asrv.NewHandler(executor, handlerOpts...)
-			jsonrpcHandler := a2asrv.NewJSONRPCHandler(
-				requestHandler,
-				a2asrv.WithKeepAlive(20*time.Second), // A2A-03: SSE heartbeat every 20s (within 15-25s range)
-			)
-
-			// 5. Delegate to SDK handler.
-			jsonrpcHandler.ServeHTTP(w, r)
-		})
+		r.Use(middleware.A2AVersionGuard)
+		r.Use(middleware.SSENoBuffering)
+		r.Post("/", handleA2ARequest(hubMgr, queries, logger, messages))
+		r.Post("/*", handleA2ARequest(hubMgr, queries, logger, messages))
 	})
 
-	// Room's relay Agent Card — DISC-05 (public, no auth required).
+	// Room's relay Agent Card — DISC-05
 	r.Get("/r/{slug}/.well-known/agent-card.json", func(w http.ResponseWriter, r *http.Request) {
 		slug := chi.URLParam(r, "slug")
 		room, err := queries.GetRoomBySlug(r.Context(), slug)
@@ -78,9 +66,104 @@ func MountA2ARoutes(
 	})
 }
 
+func handleA2ARequest(
+	hubMgr *hub.HubManager,
+	queries *db.Queries,
+	logger *slog.Logger,
+	messages *hub.MessageStore,
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		slug := chi.URLParam(r, "slug")
+
+		room, err := queries.GetRoomBySlug(r.Context(), slug)
+		if err != nil {
+			writeJSONRPCError(w, -32603, "room not found", nil)
+			return
+		}
+		roomID := hub.NewRoomID(room.ID.Bytes)
+
+		var req jsonRPCRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSONRPCError(w, -32700, "parse error", nil)
+			return
+		}
+
+		switch req.Method {
+		case "message/send":
+			handleMessageSend(w, r, req, roomID, hubMgr, messages, logger)
+		default:
+			writeJSONRPCError(w, -32601, "method not found: "+req.Method, req.ID)
+		}
+	}
+}
+
+func handleMessageSend(
+	w http.ResponseWriter,
+	r *http.Request,
+	req jsonRPCRequest,
+	roomID hub.RoomID,
+	hubMgr *hub.HubManager,
+	messages *hub.MessageStore,
+	logger *slog.Logger,
+) {
+	var params messageSendParams
+	if err := json.Unmarshal(req.Params, &params); err != nil {
+		writeJSONRPCError(w, -32602, "invalid params", req.ID)
+		return
+	}
+
+	// Extract text content
+	var textContent string
+	for _, part := range params.Message.Parts {
+		if part.Kind == "text" {
+			textContent = part.Text
+			break
+		}
+	}
+
+	// Store message for polling
+	if messages != nil && textContent != "" {
+		messages.Append(roomID, params.Message.Role, textContent)
+	}
+
+	// Broadcast to SSE subscribers
+	roomHub := hubMgr.GetOrCreate(r.Context(), roomID)
+	evt := hub.RoomEvent{
+		Type:    hub.EventMessage,
+		RoomID:  roomID,
+		Payload: params.Message,
+		Timestamp: time.Now(),
+	}
+	roomHub.Broadcast(evt)
+
+	// Return immediately with A2A-compliant response
+	taskID := uuid.New().String()
+	resp := map[string]any{
+		"jsonrpc": "2.0",
+		"id":      req.ID,
+		"result": map[string]any{
+			"id":     taskID,
+			"status": map[string]any{"state": "completed"},
+			"messages": []map[string]any{
+				{
+					"role": "agent",
+					"parts": []map[string]any{
+						{"kind": "text", "text": "message relayed"},
+					},
+				},
+			},
+		},
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
+
+	if logger != nil {
+		logger.Info("message relayed", "room", roomID.String(), "text_len", len(textContent))
+	}
+}
+
 // BuildRoomRelayCard creates the room's relay Agent Card per DISC-05.
-// This describes the relay's A2A endpoint, NOT individual agent cards.
-// Exported so tests can verify the card structure.
 func BuildRoomRelayCard(slug, displayName, baseURL string) *a2a.AgentCard {
 	return &a2a.AgentCard{
 		Name:        "Quorum Relay - " + displayName,
@@ -104,13 +187,12 @@ func BuildRoomRelayCard(slug, displayName, baseURL string) *a2a.AgentCard {
 	}
 }
 
-// writeJSONRPCError writes a JSON-RPC 2.0 error response with the given code and message.
-func writeJSONRPCError(w http.ResponseWriter, code int, msg string) {
+func writeJSONRPCError(w http.ResponseWriter, code int, msg string, id any) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusBadRequest)
+	w.WriteHeader(http.StatusOK) // JSON-RPC errors still return 200
 	json.NewEncoder(w).Encode(map[string]any{
 		"jsonrpc": "2.0",
 		"error":   map[string]any{"code": code, "message": msg},
-		"id":      nil,
+		"id":      id,
 	})
 }
