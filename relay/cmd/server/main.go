@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -13,9 +14,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/github"
+	"golang.org/x/oauth2/google"
 
 	"github.com/fcavalcanti/quorum/relay/internal/config"
 	"github.com/fcavalcanti/quorum/relay/internal/db"
@@ -66,14 +72,77 @@ func main() {
 	}
 
 	// Create the sqlc Queries instance backed by the pool.
-	// db.New accepts any DBTX — *pgxpool.Pool satisfies the interface.
 	queries := db.New(pool)
 
-	// Wire service and handler layers.
+	// --- Services ---
 	roomService := service.NewRoomService(queries)
-	roomHandler := handler.NewRoomHandler(roomService, cfg.BaseURL)
+	authService := service.NewAuthService(queries, cfg.JWTSecret)
 
-	// Build chi router.
+	// --- OAuth configs ---
+	googleOAuthConfig := &oauth2.Config{
+		ClientID:     cfg.GoogleClientID,
+		ClientSecret: cfg.GoogleClientSecret,
+		RedirectURL:  cfg.BaseURL + "/auth/google/callback",
+		Scopes:       []string{"openid", "email", "profile"},
+		Endpoint:     google.Endpoint,
+	}
+
+	githubOAuthConfig := &oauth2.Config{
+		ClientID:     cfg.GitHubClientID,
+		ClientSecret: cfg.GitHubClientSecret,
+		RedirectURL:  cfg.BaseURL + "/auth/github/callback",
+		Scopes:       []string{"user:email", "read:user"},
+		Endpoint:     github.Endpoint,
+	}
+
+	// --- Handlers ---
+	roomHandler := handler.NewRoomHandler(roomService, cfg.BaseURL)
+	authHandler := handler.NewAuthHandler(authService, googleOAuthConfig, githubOAuthConfig, cfg.FrontendURL)
+
+	// --- JWT auth ---
+	tokenAuth := mw.NewJWTAuth(cfg.JWTSecret)
+
+	// --- Rate limiters (D-10, D-12) ---
+
+	// Anonymous room creation: 2/hour per IP
+	anonRateLimiter := httprate.Limit(
+		cfg.AnonRoomLimitPerHour,
+		time.Hour,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+		httprate.WithLimitHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Retry-After", "3600")
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"error":       "rate_limit_exceeded",
+				"message":     "Too many rooms created. Try again in an hour.",
+				"retry_after": 3600,
+				"limit":       cfg.AnonRoomLimitPerHour,
+				"window":      "1h",
+			})
+		})),
+	)
+
+	// Authenticated room creation: 5/hour per IP
+	authedRateLimiter := httprate.Limit(
+		cfg.AuthedRoomLimitPerHour,
+		time.Hour,
+		httprate.WithKeyFuncs(httprate.KeyByIP),
+		httprate.WithLimitHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("Retry-After", "3600")
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"error":       "rate_limit_exceeded",
+				"message":     "Room creation rate limit reached.",
+				"retry_after": 3600,
+				"limit":       cfg.AuthedRoomLimitPerHour,
+				"window":      "1h",
+			})
+		})),
+	)
+
+	// --- Build chi router ---
 	r := chi.NewRouter()
 
 	// Global middleware — applied to all routes.
@@ -96,15 +165,46 @@ func main() {
 		w.Write([]byte(`{"status":"ok"}`))
 	})
 
-	// Public room creation — includes AnonSession middleware to track anonymous users.
+	// OAuth routes — public, no JWT required.
+	r.Get("/auth/google/login", authHandler.GoogleLogin)
+	r.Get("/auth/google/callback", authHandler.GoogleCallback)
+	r.Get("/auth/github/login", authHandler.GitHubLogin)
+	r.Get("/auth/github/callback", authHandler.GitHubCallback)
+	r.Post("/auth/logout", authHandler.Logout)
+	r.Post("/auth/refresh", authHandler.RefreshToken)
+
+	// Anonymous room creation — rate-limited per IP, anon session tracked.
 	r.Group(func(r chi.Router) {
 		r.Use(mw.AnonSession)
+		r.Use(anonRateLimiter)
 		r.Post("/rooms", roomHandler.CreateRoom)
 	})
 
-	// Public read routes — no session tracking needed.
+	// Public read routes — no session or auth required.
 	r.Get("/rooms", roomHandler.ListPublicRooms)
 	r.Get("/rooms/{slug}", roomHandler.GetRoom)
+
+	// Authenticated routes — JWT required for all routes in this group.
+	r.Group(func(r chi.Router) {
+		r.Use(jwtauth.Verifier(tokenAuth))
+		r.Use(jwtauth.Authenticator(tokenAuth))
+
+		// Current user info
+		r.Get("/auth/me", authHandler.Me)
+
+		// My rooms list
+		r.Get("/me/rooms", roomHandler.ListMyRooms)
+
+		// Private room creation — additionally rate-limited per IP.
+		r.Group(func(r chi.Router) {
+			r.Use(authedRateLimiter)
+			r.Post("/rooms/private", roomHandler.CreatePrivateRoom)
+		})
+
+		// Room management — owner-only enforcement in handler/service layer.
+		r.Delete("/rooms/{slug}", roomHandler.DeleteRoom)
+		r.Patch("/rooms/{slug}", roomHandler.UpdateRoom)
+	})
 
 	// Start HTTP server with graceful shutdown.
 	addr := fmt.Sprintf(":%d", cfg.Port)

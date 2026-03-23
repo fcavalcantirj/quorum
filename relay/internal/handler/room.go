@@ -7,10 +7,34 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	mw "github.com/fcavalcanti/quorum/relay/internal/middleware"
 	"github.com/fcavalcanti/quorum/relay/internal/service"
 )
+
+// parseUserUUID extracts and parses the user ID from JWT context.
+// Returns the pgtype.UUID and true on success, or writes 401/500 and returns false.
+func parseUserUUID(w http.ResponseWriter, r *http.Request) (pgtype.UUID, bool) {
+	userIDStr, ok := mw.UserIDFromContext(r.Context())
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{
+			"error":   "unauthorized",
+			"message": "Authentication required.",
+		})
+		return pgtype.UUID{}, false
+	}
+
+	var pgUUID pgtype.UUID
+	if err := pgUUID.Scan(userIDStr); err != nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{
+			"error":   "invalid_token",
+			"message": "Invalid user ID in token.",
+		})
+		return pgtype.UUID{}, false
+	}
+	return pgUUID, true
+}
 
 // RoomHandler handles HTTP requests for room operations.
 type RoomHandler struct {
@@ -158,6 +182,236 @@ func (h *RoomHandler) ListPublicRooms(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rooms, err := h.svc.ListPublicRooms(r.Context(), limit, offset)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error":   "internal_error",
+			"message": "Failed to list rooms.",
+		})
+		return
+	}
+
+	resp := make([]roomResponse, 0, len(rooms))
+	for _, room := range rooms {
+		rr := roomResponse{
+			Slug:        room.Slug,
+			DisplayName: room.DisplayName,
+			Tags:        room.Tags,
+			IsPrivate:   room.IsPrivate,
+			URL:         h.baseURL + "/r/" + room.Slug,
+			A2AURL:      h.baseURL + "/r/" + room.Slug + "/a2a",
+			CreatedAt:   room.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
+		}
+		if room.Description.Valid {
+			rr.Description = room.Description.String
+		}
+		resp = append(resp, rr)
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// CreatePrivateRoom handles POST /rooms/private — authenticated private room creation.
+func (h *RoomHandler) CreatePrivateRoom(w http.ResponseWriter, r *http.Request) {
+	userID, ok := parseUserUUID(w, r)
+	if !ok {
+		return
+	}
+
+	var req struct {
+		Name        string   `json:"name"`
+		Description string   `json:"description,omitempty"`
+		Tags        []string `json:"tags,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error":   "invalid_request",
+			"message": "Invalid JSON body.",
+		})
+		return
+	}
+
+	room, plainToken, err := h.svc.CreatePrivateRoom(r.Context(), req.Name, req.Description, req.Tags, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrSlugTaken):
+			writeJSON(w, http.StatusConflict, map[string]string{
+				"error":   "slug_taken",
+				"message": "This name is taken. Please choose another name.",
+			})
+		case errors.Is(err, service.ErrSlugInvalid):
+			writeJSON(w, http.StatusBadRequest, map[string]string{
+				"error":   "invalid_slug",
+				"message": "Room name must produce a valid slug: 3-40 chars, lowercase letters, numbers, and hyphens.",
+			})
+		case errors.Is(err, service.ErrNameRequired):
+			writeJSON(w, http.StatusBadRequest, map[string]string{
+				"error":   "name_required",
+				"message": "Room name is required.",
+			})
+		default:
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error":   "internal_error",
+				"message": "Failed to create room.",
+			})
+		}
+		return
+	}
+
+	resp := createRoomResponse{
+		Slug:        room.Slug,
+		DisplayName: room.DisplayName,
+		URL:         h.baseURL + "/r/" + room.Slug,
+		A2AURL:      h.baseURL + "/r/" + room.Slug + "/a2a",
+		BearerToken: plainToken,
+	}
+
+	writeJSON(w, http.StatusCreated, resp)
+}
+
+// DeleteRoom handles DELETE /rooms/{slug} — owner-only room deletion.
+func (h *RoomHandler) DeleteRoom(w http.ResponseWriter, r *http.Request) {
+	userID, ok := parseUserUUID(w, r)
+	if !ok {
+		return
+	}
+
+	slug := chi.URLParam(r, "slug")
+
+	// Resolve slug to room
+	room, err := h.svc.GetRoomBySlug(r.Context(), slug)
+	if err != nil {
+		if errors.Is(err, service.ErrRoomNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{
+				"error":   "not_found",
+				"message": "Room not found.",
+			})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error":   "internal_error",
+			"message": "Failed to retrieve room.",
+		})
+		return
+	}
+
+	if err := h.svc.DeleteRoom(r.Context(), room.ID, userID); err != nil {
+		switch {
+		case errors.Is(err, service.ErrNotRoomOwner):
+			writeJSON(w, http.StatusForbidden, map[string]string{
+				"error":   "forbidden",
+				"message": "You are not the owner of this room.",
+			})
+		case errors.Is(err, service.ErrRoomNotFound):
+			writeJSON(w, http.StatusNotFound, map[string]string{
+				"error":   "not_found",
+				"message": "Room not found.",
+			})
+		default:
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error":   "internal_error",
+				"message": "Failed to delete room.",
+			})
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// UpdateRoom handles PATCH /rooms/{slug} — owner-only room metadata update.
+func (h *RoomHandler) UpdateRoom(w http.ResponseWriter, r *http.Request) {
+	userID, ok := parseUserUUID(w, r)
+	if !ok {
+		return
+	}
+
+	slug := chi.URLParam(r, "slug")
+
+	// Resolve slug to room
+	room, err := h.svc.GetRoomBySlug(r.Context(), slug)
+	if err != nil {
+		if errors.Is(err, service.ErrRoomNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{
+				"error":   "not_found",
+				"message": "Room not found.",
+			})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error":   "internal_error",
+			"message": "Failed to retrieve room.",
+		})
+		return
+	}
+
+	var req struct {
+		DisplayName *string  `json:"display_name,omitempty"`
+		Description *string  `json:"description,omitempty"`
+		Tags        []string `json:"tags,omitempty"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error":   "invalid_request",
+			"message": "Invalid JSON body.",
+		})
+		return
+	}
+
+	displayName := ""
+	if req.DisplayName != nil {
+		displayName = *req.DisplayName
+	}
+	description := ""
+	if req.Description != nil {
+		description = *req.Description
+	}
+
+	updated, err := h.svc.UpdateRoom(r.Context(), room.ID, userID, displayName, description, req.Tags)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrNotRoomOwner):
+			writeJSON(w, http.StatusForbidden, map[string]string{
+				"error":   "forbidden",
+				"message": "You are not the owner of this room.",
+			})
+		case errors.Is(err, service.ErrRoomNotFound):
+			writeJSON(w, http.StatusNotFound, map[string]string{
+				"error":   "not_found",
+				"message": "Room not found.",
+			})
+		default:
+			writeJSON(w, http.StatusInternalServerError, map[string]string{
+				"error":   "internal_error",
+				"message": "Failed to update room.",
+			})
+		}
+		return
+	}
+
+	resp := roomResponse{
+		Slug:        updated.Slug,
+		DisplayName: updated.DisplayName,
+		Tags:        updated.Tags,
+		IsPrivate:   updated.IsPrivate,
+		URL:         h.baseURL + "/r/" + updated.Slug,
+		A2AURL:      h.baseURL + "/r/" + updated.Slug + "/a2a",
+		CreatedAt:   updated.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
+	}
+	if updated.Description.Valid {
+		resp.Description = updated.Description.String
+	}
+
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// ListMyRooms handles GET /me/rooms — returns all rooms owned by the authenticated user.
+func (h *RoomHandler) ListMyRooms(w http.ResponseWriter, r *http.Request) {
+	userID, ok := parseUserUUID(w, r)
+	if !ok {
+		return
+	}
+
+	rooms, err := h.svc.ListRoomsByOwner(r.Context(), userID)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{
 			"error":   "internal_error",
