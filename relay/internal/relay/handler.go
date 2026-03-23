@@ -80,7 +80,10 @@ func handleA2ARequest(
 
 		var req jsonRPCRequest
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONRPCError(w, -32700, "parse error", nil)
+			if logger != nil {
+				logger.Error("JSON parse error", "error", err, "slug", slug)
+			}
+			writeJSONRPCError(w, -32700, "parse error: "+err.Error(), nil)
 			return
 		}
 
