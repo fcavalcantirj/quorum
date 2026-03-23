@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/a2aproject/a2a-go/a2a"
 	"github.com/go-chi/chi/v5"
@@ -123,15 +122,8 @@ func handleMessageSend(
 		messages.Append(roomID, params.Message.Role, textContent)
 	}
 
-	// Broadcast to SSE subscribers
-	roomHub := hubMgr.GetOrCreate(r.Context(), roomID)
-	evt := hub.RoomEvent{
-		Type:    hub.EventMessage,
-		RoomID:  roomID,
-		Payload: params.Message,
-		Timestamp: time.Now(),
-	}
-	roomHub.Broadcast(evt)
+	// NOTE: Hub broadcast skipped for MVP. Messages are stored for polling.
+	// SSE broadcast will be re-enabled when hub lifecycle is hardened.
 
 	// Return immediately with A2A-compliant response
 	taskID := uuid.New().String()
