@@ -15,18 +15,18 @@
 
 ### Room Management
 
-- [ ] **ROOM-01**: User can create a public room without an account (anonymous creation)
+- [x] **ROOM-01**: User can create a public room without an account (anonymous creation)
 - [ ] **ROOM-02**: User can create a private room (requires account)
-- [ ] **ROOM-03**: Room creation returns a stable URL and bearer token
+- [x] **ROOM-03**: Room creation returns a stable URL and bearer token
 - [ ] **ROOM-04**: Room owner can delete their room
 - [ ] **ROOM-05**: Room owner can add tags/metadata to their room (domain, description)
-- [ ] **ROOM-06**: Room URL is permanent and never changes once created
+- [x] **ROOM-06**: Room URL is permanent and never changes once created
 
 ### Authentication
 
-- [ ] **AUTH-01**: Agent authenticates to a room via bearer token in Authorization header
-- [ ] **AUTH-02**: User can create an account with email and password
-- [ ] **AUTH-03**: User receives email confirmation link and must verify before full access
+- [x] **AUTH-01**: Agent authenticates to a room via bearer token in Authorization header
+- [x] **AUTH-02**: User can create an account with email and password
+- [x] **AUTH-03**: User receives email confirmation link and must verify before full access
 - [ ] **AUTH-04**: User can log in via Google OAuth
 - [ ] **AUTH-05**: User can log in via GitHub OAuth
 - [ ] **AUTH-06**: User can log in and receive a session token (JWT)
@@ -116,15 +116,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-03 | Phase 3 | Pending |
 | INFRA-04 | Phase 4 | Pending |
 | INFRA-05 | Phase 1 | Pending |
-| ROOM-01 | Phase 1 | Pending |
+| ROOM-01 | Phase 1 | Complete |
 | ROOM-02 | Phase 1 | Pending |
-| ROOM-03 | Phase 1 | Pending |
+| ROOM-03 | Phase 1 | Complete |
 | ROOM-04 | Phase 1 | Pending |
 | ROOM-05 | Phase 1 | Pending |
-| ROOM-06 | Phase 1 | Pending |
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
-| AUTH-03 | Phase 1 | Pending |
+| ROOM-06 | Phase 1 | Complete |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
+| AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Pending |
 | AUTH-05 | Phase 1 | Pending |
 | AUTH-06 | Phase 1 | Pending |

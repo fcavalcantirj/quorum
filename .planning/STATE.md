@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-foundation 01-02-PLAN.md — Postgres schema, migrations, sqlc codegen
-last_updated: "2026-03-23T00:42:59.189Z"
+stopped_at: Completed 01-foundation 01-03-PLAN.md — chi router, room API, bearer token system
+last_updated: "2026-03-23T00:50:01.497Z"
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 12
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-21)
 ## Current Position
 
 Phase: 01 (foundation) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: 3 of 4
 *Updated after each plan completion*
 | Phase 01-foundation P01 | 3 | 2 tasks | 10 files |
 | Phase 01-foundation P02 | 7 | 2 tasks | 12 files |
+| Phase 01-foundation P03 | 3 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: Embed migrations via internal/migrations package (go:embed cannot use .. paths from cmd/server/)
 - [Phase 01-foundation]: sqlc-generated files tracked in git — they are the compile-time schema contract
 - [Phase 01-foundation]: stdlib.OpenDBFromPool result NOT closed — closing it closes the underlying pgxpool
+- [Phase 01-foundation]: Import alias chimw for go-chi/chi/v5/middleware to avoid collision with internal middleware package
+- [Phase 01-foundation]: chi v5.2.5 and go-chi/cors v1.2.2 were not in go.mod despite Plan 01 claiming — added via go get
+- [Phase 01-foundation]: Graceful shutdown added to main.go with http.Server struct, SIGINT/SIGTERM handling, 30s shutdown timeout
 
 ### Pending Todos
 
@@ -78,6 +82,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T00:42:59.186Z
-Stopped at: Completed 01-foundation 01-02-PLAN.md — Postgres schema, migrations, sqlc codegen
+Last session: 2026-03-23T00:50:01.495Z
+Stopped at: Completed 01-foundation 01-03-PLAN.md — chi router, room API, bearer token system
 Resume file: None
