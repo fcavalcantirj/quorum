@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03-streaming-deploy 03-01-PLAN.md — SSE keep-alive, X-Accel-Buffering middleware, connection limits, goleak tests
-last_updated: "2026-03-23T01:46:09.639Z"
+stopped_at: "Checkpoint reached: 03-02 Task 2 — deploy to Easypanel (human-verify)"
+last_updated: "2026-03-23T01:53:10.148Z"
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 12
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -53,6 +53,7 @@ Plan: 2 of 2
 | Phase 02-a2a-core P01 | 8 | 2 tasks | 13 files |
 | Phase 02 P02 | 8 | 2 tasks | 9 files |
 | Phase 03 P01 | 5 min | 2 tasks | 9 files |
+| Phase 03-streaming-deploy P02 | 15 | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,8 @@ Recent decisions affecting current work:
 - [Phase 03]: SDK uses a2asrv.WithKeepAlive (not WithTransportKeepAlive) — verified in a2a-go v0.3.12 source
 - [Phase 03]: SSENoBuffering applied unconditionally to A2A route group — Traefik ignores X-Accel-Buffering on non-SSE responses
 - [Phase 03]: atomic.Int32 sseCount in RoomHub — lock-free reads, writes inside hub goroutine for subscribe/unsubscribe
+- [Phase 03-streaming-deploy]: GOARCH=amd64 explicit in Dockerfile ENV — prevents ARM Mac builders from producing ARM binaries for x86_64 VPS
+- [Phase 03-streaming-deploy]: wget in HEALTHCHECK (not curl) — alpine:3.21 includes busybox wget; curl requires extra apk add
 
 ### Pending Todos
 
@@ -98,6 +101,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T01:46:09.637Z
-Stopped at: Completed 03-streaming-deploy 03-01-PLAN.md — SSE keep-alive, X-Accel-Buffering middleware, connection limits, goleak tests
+Last session: 2026-03-23T01:52:52.942Z
+Stopped at: Checkpoint reached: 03-02 Task 2 — deploy to Easypanel (human-verify)
 Resume file: None

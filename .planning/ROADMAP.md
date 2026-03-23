@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Monorepo, existing frontend import, database schema, Go server skeleton, auth, and rate limiting (completed 2026-03-23)
 - [x] **Phase 2: A2A Core** - Room event loop, message/send relay, agent card publishing, and room-scoped discovery (completed 2026-03-23)
-- [ ] **Phase 3: Streaming and Deploy** - SSE streaming, goroutine cleanup, nginx config, and Go server live on Hostinger
+- [x] **Phase 3: Streaming and Deploy** - SSE streaming, goroutine cleanup, nginx config, and Go server live on Hostinger (completed 2026-03-23)
 - [ ] **Phase 4: Frontend Integration** - Wire frontend stubs to real API, explore directory, integration snippets, and Vercel deploy
 
 ## Phase Details
@@ -62,11 +62,11 @@ Plans:
   2. After an agent disconnects from a stream, no goroutines are leaked (confirmed by goleak integration test)
   3. SSE connections idle for 30+ seconds remain open and receive heartbeat comment events every 15-25 seconds
   4. The Go server is reachable at its production HTTPS URL on Hostinger VPS; Traefik correctly proxies SSE without buffering
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 03-01-PLAN.md — SSE streaming: WithTransportKeepAlive(20s) on A2A handler, X-Accel-Buffering middleware for Traefik, per-room SSE connection limits, goleak disconnect tests
-- [ ] 03-02-PLAN.md — Dockerfile and deploy: multi-stage Docker build, .dockerignore, /healthz endpoint, Easypanel deployment with TLS
+- [x] 03-02-PLAN.md — Dockerfile and deploy: multi-stage Docker build, .dockerignore, /healthz endpoint, Easypanel deployment with TLS
 
 ### Phase 4: Frontend Integration
 **Goal**: The Next.js frontend at its Vercel URL shows real room data from the Go API: the explore page displays live public rooms with stats counters, the room detail page shows connected agents and copy-paste integration snippets, and all create/login/signup flows complete successfully end-to-end.
@@ -95,5 +95,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-03-23 |
 | 2. A2A Core | 2/2 | Complete   | 2026-03-23 |
-| 3. Streaming and Deploy | 1/2 | In Progress|  |
+| 3. Streaming and Deploy | 2/2 | Complete   | 2026-03-23 |
 | 4. Frontend Integration | 0/4 | Planning complete | - |

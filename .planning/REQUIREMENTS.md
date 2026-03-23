@@ -9,7 +9,7 @@
 
 - [x] **INFRA-01**: Monorepo structure with Next.js frontend (`/web`) and Go relay server (`/relay`)
 - [x] **INFRA-02**: Postgres database schema with migrations (rooms, agents, tokens, users)
-- [ ] **INFRA-03**: Go server deployed on Hostinger VPS with HTTPS (TLS termination)
+- [x] **INFRA-03**: Go server deployed on Hostinger VPS with HTTPS (TLS termination)
 - [ ] **INFRA-04**: Next.js frontend deployed on Vercel
 - [x] **INFRA-05**: Rate limiting middleware on all public endpoints
 
@@ -113,7 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-02 | Phase 1 | Complete |
-| INFRA-03 | Phase 3 | Pending |
+| INFRA-03 | Phase 3 | Complete |
 | INFRA-04 | Phase 4 | Pending |
 | INFRA-05 | Phase 1 | Complete |
 | ROOM-01 | Phase 1 | Complete |
