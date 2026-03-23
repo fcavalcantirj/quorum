@@ -35,8 +35,8 @@
 ### A2A Protocol — Messages
 
 - [x] **A2A-01**: Relay handles `message/send` (synchronous JSON-RPC 2.0) between agents in a room
-- [ ] **A2A-02**: Relay handles `message/stream` (SSE streaming) between agents in a room
-- [ ] **A2A-03**: SSE connections send heartbeat comments every 15-25 seconds
+- [x] **A2A-02**: Relay handles `message/stream` (SSE streaming) between agents in a room
+- [x] **A2A-03**: SSE connections send heartbeat comments every 15-25 seconds
 - [x] **A2A-04**: Relay returns proper A2A JSON-RPC error codes on failure
 - [x] **A2A-05**: All A2A endpoints require `A2A-Version: 1.0` header
 
@@ -130,8 +130,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-06 | Phase 1 | Complete |
 | AUTH-07 | Phase 1 | Complete |
 | A2A-01 | Phase 2 | Complete |
-| A2A-02 | Phase 3 | Pending |
-| A2A-03 | Phase 3 | Pending |
+| A2A-02 | Phase 3 | Complete |
+| A2A-03 | Phase 3 | Complete |
 | A2A-04 | Phase 2 | Complete |
 | A2A-05 | Phase 2 | Complete |
 | DISC-01 | Phase 2 | Complete |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-a2a-core 02-02-PLAN.md — A2A executor, discovery endpoints, presence reaper
-last_updated: "2026-03-23T01:37:47.871Z"
+stopped_at: Completed 03-streaming-deploy 03-01-PLAN.md — SSE keep-alive, X-Accel-Buffering middleware, connection limits, goleak tests
+last_updated: "2026-03-23T01:46:09.639Z"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 12
-  completed_plans: 6
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Agents can join a room and talk to each other via A2A protocol with zero friction — one URL, one token, done.
-**Current focus:** Phase 02 — a2a-core
+**Current focus:** Phase 03 — streaming-deploy
 
 ## Current Position
 
-Phase: 03
-Plan: Not started
+Phase: 03 (streaming-deploy) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Plan: Not started
 | Phase 01-foundation P04 | 7 | 2 tasks | 8 files |
 | Phase 02-a2a-core P01 | 8 | 2 tasks | 13 files |
 | Phase 02 P02 | 8 | 2 tasks | 9 files |
+| Phase 03 P01 | 5 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Single dynamic A2A handler per-request instead of per-room registration avoids dynamic route manipulation in chi
 - [Phase 02]: StatusUpdateEvent.Final=true required to signal SDK task completion
 - [Phase 02]: Root context created in main() cancelled on SIGINT/SIGTERM to propagate shutdown to hub goroutines and reaper
+- [Phase 03]: SDK uses a2asrv.WithKeepAlive (not WithTransportKeepAlive) — verified in a2a-go v0.3.12 source
+- [Phase 03]: SSENoBuffering applied unconditionally to A2A route group — Traefik ignores X-Accel-Buffering on non-SSE responses
+- [Phase 03]: atomic.Int32 sseCount in RoomHub — lock-free reads, writes inside hub goroutine for subscribe/unsubscribe
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T01:32:20.483Z
-Stopped at: Completed 02-a2a-core 02-02-PLAN.md — A2A executor, discovery endpoints, presence reaper
+Last session: 2026-03-23T01:46:09.637Z
+Stopped at: Completed 03-streaming-deploy 03-01-PLAN.md — SSE keep-alive, X-Accel-Buffering middleware, connection limits, goleak tests
 Resume file: None

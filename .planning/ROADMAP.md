@@ -62,10 +62,10 @@ Plans:
   2. After an agent disconnects from a stream, no goroutines are leaked (confirmed by goleak integration test)
   3. SSE connections idle for 30+ seconds remain open and receive heartbeat comment events every 15-25 seconds
   4. The Go server is reachable at its production HTTPS URL on Hostinger VPS; Traefik correctly proxies SSE without buffering
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 03-01-PLAN.md — SSE streaming: WithTransportKeepAlive(20s) on A2A handler, X-Accel-Buffering middleware for Traefik, per-room SSE connection limits, goleak disconnect tests
+- [x] 03-01-PLAN.md — SSE streaming: WithTransportKeepAlive(20s) on A2A handler, X-Accel-Buffering middleware for Traefik, per-room SSE connection limits, goleak disconnect tests
 - [ ] 03-02-PLAN.md — Dockerfile and deploy: multi-stage Docker build, .dockerignore, /healthz endpoint, Easypanel deployment with TLS
 
 ### Phase 4: Frontend Integration
@@ -95,5 +95,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-03-23 |
 | 2. A2A Core | 2/2 | Complete   | 2026-03-23 |
-| 3. Streaming and Deploy | 0/2 | Planning complete | - |
+| 3. Streaming and Deploy | 1/2 | In Progress|  |
 | 4. Frontend Integration | 0/4 | Planning complete | - |
