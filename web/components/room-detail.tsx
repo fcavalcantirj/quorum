@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import useSWR from "swr"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +22,22 @@ import {
   Shield,
   MessageSquare,
 } from "lucide-react"
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL
+const fetcher = (url: string) => fetch(url).then(r => r.json())
+
+interface ApiAgent {
+  name: string
+  description: string
+  skills: { id: string; name: string }[]
+}
+
+interface ApiMessage {
+  id: number
+  agent_name: string
+  content: string
+  timestamp: string
+}
 
 // Mock data - in production this would come from an API
 const roomData = {
@@ -104,6 +121,14 @@ export function RoomDetail({ roomId, apiRoom }: RoomDetailProps) {
   const [copiedUrl, setCopiedUrl] = useState(false)
   const [copiedToken, setCopiedToken] = useState(false)
   const [copiedCode, setCopiedCode] = useState(false)
+
+  // Live data from API — polls every 5 seconds
+  const { data: liveAgents } = useSWR<ApiAgent[]>(
+    API_URL ? `${API_URL}/r/${roomId}/agents` : null, fetcher, { refreshInterval: 5000 }
+  )
+  const { data: liveMessages } = useSWR<ApiMessage[]>(
+    API_URL ? `${API_URL}/r/${roomId}/messages` : null, fetcher, { refreshInterval: 3000 }
+  )
 
   // Use API data if provided, otherwise fall back to mock data
   const room = apiRoom
@@ -215,7 +240,7 @@ client.on('task', async (task) => {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards — live from API */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4 pt-6">
@@ -223,7 +248,7 @@ client.on('task', async (task) => {
                 <Users className="h-5 w-5 text-accent" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{room.agentCount}</p>
+                <p className="text-2xl font-bold text-foreground">{liveAgents?.length ?? room.agentCount}</p>
                 <p className="text-sm text-muted-foreground">Connected Agents</p>
               </div>
             </CardContent>
@@ -234,7 +259,7 @@ client.on('task', async (task) => {
                 <Activity className="h-5 w-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{room.activeNow}</p>
+                <p className="text-2xl font-bold text-foreground">{liveAgents?.length ?? room.activeNow}</p>
                 <p className="text-sm text-muted-foreground">Active Now</p>
               </div>
             </CardContent>
@@ -245,8 +270,8 @@ client.on('task', async (task) => {
                 <MessageSquare className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{room.messagesPerHour}</p>
-                <p className="text-sm text-muted-foreground">Messages / Hour</p>
+                <p className="text-2xl font-bold text-foreground">{liveMessages?.length ?? 0}</p>
+                <p className="text-sm text-muted-foreground">Total Messages</p>
               </div>
             </CardContent>
           </Card>
@@ -256,12 +281,45 @@ client.on('task', async (task) => {
                 <Clock className="h-5 w-5 text-purple-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{(room.messagesTotal / 1000).toFixed(1)}K</p>
-                <p className="text-sm text-muted-foreground">Total Messages</p>
+                <p className="text-2xl font-bold text-foreground">{new Date(room.createdAt).toLocaleDateString()}</p>
+                <p className="text-sm text-muted-foreground">Created</p>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* LIVE MESSAGES — most recent on top */}
+        {liveMessages && liveMessages.length > 0 && (
+          <Card className="mt-8 border-accent/30">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-accent" />
+                Live Messages
+                <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {[...liveMessages].reverse().map((msg) => (
+                  <div key={msg.id} className="flex items-start gap-3 rounded-lg bg-muted/50 px-4 py-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/10">
+                      <Bot className="h-4 w-4 text-accent" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground">{msg.agent_name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-foreground">{msg.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Connection Details */}
         <Card className="mt-8">
@@ -325,30 +383,30 @@ client.on('task', async (task) => {
 
           <TabsContent value="agents" className="mt-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {room.agents.map((agent) => (
-                <Card key={agent.id}>
-                  <CardContent className="flex items-center gap-4 pt-6">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                      <Bot className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-foreground">{agent.name}</p>
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            agent.status === "active" ? "bg-green-500" : "bg-muted-foreground"
-                          }`}
-                        />
+              {(liveAgents || []).length > 0 ? (
+                liveAgents!.map((agent) => (
+                  <Card key={agent.name}>
+                    <CardContent className="flex items-center gap-4 pt-6">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                        <Bot className="h-5 w-5 text-muted-foreground" />
                       </div>
-                      <p className="text-sm text-muted-foreground">{agent.skill}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-foreground">{agent.messages.toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">messages</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground">{agent.name}</p>
+                          <span className="h-2 w-2 rounded-full bg-green-500" />
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {agent.skills?.[0]?.name || agent.description || "Agent"}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground col-span-full text-center py-8">
+                  No agents connected. Use the Quick Start tab to connect one.
+                </p>
+              )}
             </div>
           </TabsContent>
 
@@ -378,17 +436,23 @@ client.on('task', async (task) => {
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  {room.recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-start gap-4">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                        <Activity className="h-4 w-4 text-muted-foreground" />
+                  {(liveMessages || []).length > 0 ? (
+                    [...liveMessages!].reverse().map((msg) => (
+                      <div key={msg.id} className="flex items-start gap-4">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
+                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm text-foreground">{msg.content}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {msg.agent_name} · {new Date(msg.timestamp).toLocaleTimeString()}
+                          </p>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-foreground">{activity.event}</p>
-                        <p className="text-xs text-muted-foreground">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">No activity yet</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
