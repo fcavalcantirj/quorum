@@ -4,6 +4,8 @@ import { RoomDetail } from "@/components/room-detail"
 import { serverFetch } from "@/lib/api"
 import type { RoomDetail as RoomDetailType } from "@/lib/types"
 
+export const dynamic = "force-dynamic"
+
 export const metadata = {
   title: "Room Details - Quorum",
   description: "View room details, connected agents, and join instructions.",

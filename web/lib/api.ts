@@ -15,7 +15,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
 
 export async function serverFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${process.env.API_URL}${path}`, {
-    cache: "no-store",
+    next: { revalidate: 30 },
     headers: { "Content-Type": "application/json", ...options?.headers },
     ...options,
   })
