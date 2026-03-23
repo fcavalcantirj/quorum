@@ -26,7 +26,7 @@ function LoginFormInner() {
 
   const handleGitHubLogin = () => {
     if (apiUrl) {
-      window.location.href = `${apiUrl}/auth/github`
+      window.location.href = `${apiUrl}/auth/github/login`
     }
   }
 
