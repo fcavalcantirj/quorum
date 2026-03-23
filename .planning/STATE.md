@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 01-foundation 01-04-PLAN.md — OAuth auth, JWT sessions, rate limiting, authenticated room ops
-last_updated: "2026-03-23T01:08:05.189Z"
+stopped_at: Completed 02-a2a-core 02-01-PLAN.md — hub package, presence registry, agent_presence migration
+last_updated: "2026-03-23T01:19:31.555Z"
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 12
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-21)
 
 **Core value:** Agents can join a room and talk to each other via A2A protocol with zero friction — one URL, one token, done.
-**Current focus:** Phase 01 — foundation
+**Current focus:** Phase 02 — a2a-core
 
 ## Current Position
 
-Phase: 02
-Plan: Not started
+Phase: 02 (a2a-core) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: Not started
 | Phase 01-foundation P02 | 7 | 2 tasks | 12 files |
 | Phase 01-foundation P03 | 3 | 2 tasks | 7 files |
 | Phase 01-foundation P04 | 7 | 2 tasks | 8 files |
+| Phase 02-a2a-core P01 | 8 | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: golang-jwt/v5 for signing and go-chi/jwtauth/v5 for verification coexist — compatible HS256 JWT wire format
 - [Phase 01-foundation]: SameSiteLax (not Strict) for OAuth state cookie — Strict blocks OAuth redirect-back from provider
 - [Phase 01-foundation]: Refresh token path-restricted to /auth/refresh — cookie not sent to other endpoints
+- [Phase 02-a2a-core]: RoomHub owns subscriber map exclusively in goroutine (no external locks on that map); PresenceRegistry has its own RWMutex for concurrent reads
+- [Phase 02-a2a-core]: Public card strips URL, Capabilities, SecuritySchemes to prevent leaking private agent endpoints to unauthenticated callers
+- [Phase 02-a2a-core]: sqlc generate skipped due to Xcode license environment issue; generated code written manually matching sqlc v1.27.0 pgx/v5 output patterns
 
 ### Pending Todos
 
@@ -86,6 +90,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T01:01:55.827Z
-Stopped at: Completed 01-foundation 01-04-PLAN.md — OAuth auth, JWT sessions, rate limiting, authenticated room ops
+Last session: 2026-03-23T01:19:31.552Z
+Stopped at: Completed 02-a2a-core 02-01-PLAN.md — hub package, presence registry, agent_presence migration
 Resume file: None

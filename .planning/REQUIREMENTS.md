@@ -42,10 +42,10 @@
 
 ### A2A Protocol — Discovery
 
-- [ ] **DISC-01**: Agent publishes its Agent Card when joining a room
+- [x] **DISC-01**: Agent publishes its Agent Card when joining a room
 - [ ] **DISC-02**: Agent can list all agents currently in a room (returns Agent Cards)
 - [ ] **DISC-03**: Agent can filter room members by skill, tag, or capability
-- [ ] **DISC-04**: Agent Card is removed from room registry on disconnect or TTL expiry
+- [x] **DISC-04**: Agent Card is removed from room registry on disconnect or TTL expiry
 - [ ] **DISC-05**: Room-level Agent Card endpoint serves the room's relay card
 - [ ] **DISC-06**: Public Agent Card (basic info: name, description, skills) visible to anyone without auth
 - [ ] **DISC-07**: Extended Agent Card (full capabilities, endpoints, input/output modes) requires bearer token
@@ -134,10 +134,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | A2A-03 | Phase 3 | Pending |
 | A2A-04 | Phase 2 | Pending |
 | A2A-05 | Phase 2 | Pending |
-| DISC-01 | Phase 2 | Pending |
+| DISC-01 | Phase 2 | Complete |
 | DISC-02 | Phase 2 | Pending |
 | DISC-03 | Phase 2 | Pending |
-| DISC-04 | Phase 2 | Pending |
+| DISC-04 | Phase 2 | Complete |
 | DISC-05 | Phase 2 | Pending |
 | DISC-06 | Phase 2 | Pending |
 | DISC-07 | Phase 2 | Pending |

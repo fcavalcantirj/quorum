@@ -50,7 +50,7 @@ Plans:
 **Plans:** 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Room event loop: per-room goroutine hub, PresenceRegistry, HubManager, type-safe RoomID, RoomEvent model, agent_presence migration, two-room isolation test
+- [x] 02-01-PLAN.md — Room event loop: per-room goroutine hub, PresenceRegistry, HubManager, type-safe RoomID, RoomEvent model, agent_presence migration, two-room isolation test
 - [ ] 02-02-PLAN.md — A2A message/send relay and discovery endpoints: RoomExecutor (AgentExecutor), A2A-Version middleware, join/agents/info/heartbeat REST endpoints, global agent directory, presence reaper
 
 ### Phase 3: Streaming and Deploy
