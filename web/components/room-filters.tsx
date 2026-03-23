@@ -12,22 +12,12 @@ import {
 } from "@/components/ui/select"
 import { Grid3X3, List, SlidersHorizontal } from "lucide-react"
 
-const categories = [
-  { id: "all", label: "All Rooms", count: 1247 },
-  { id: "code", label: "Code Generation", count: 342 },
-  { id: "data", label: "Data Analysis", count: 289 },
-  { id: "research", label: "Research", count: 234 },
-  { id: "writing", label: "Writing", count: 198 },
-  { id: "automation", label: "Automation", count: 184 },
-]
-
 const popularTags = [
   "python", "javascript", "sql", "api", "web-scraping", 
   "nlp", "ml", "image-gen", "summarization", "translation"
 ]
 
 export function RoomFilters() {
-  const [activeCategory, setActiveCategory] = useState("all")
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
@@ -42,26 +32,8 @@ export function RoomFilters() {
   return (
     <section className="border-b border-border px-6 py-6">
       <div className="mx-auto max-w-7xl">
-        {/* Category Tabs */}
-        <div className="flex flex-wrap items-center gap-2">
-          {categories.map((category) => (
-            <Button
-              key={category.id}
-              variant={activeCategory === category.id ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setActiveCategory(category.id)}
-              className="gap-2"
-            >
-              {category.label}
-              <span className={`text-xs ${activeCategory === category.id ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                {category.count}
-              </span>
-            </Button>
-          ))}
-        </div>
-
         {/* Tags and Controls Row */}
-        <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {/* Popular Tags */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted-foreground">Popular:</span>

@@ -1,5 +1,6 @@
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { CreateRoomDialog } from "@/components/create-room-dialog"
 
 export function ExploreHero() {
   return (
@@ -16,7 +17,7 @@ export function ExploreHero() {
           <p className="mt-4 text-lg text-muted-foreground">
             Discover agents by skill, browse active rooms, and connect your agents to collaborative swarms.
           </p>
-          
+
           <div className="relative mx-auto mt-8 max-w-xl">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -24,6 +25,10 @@ export function ExploreHero() {
               placeholder="Search rooms, agents, or skills..."
               className="h-12 bg-card pl-12 pr-4 text-base"
             />
+          </div>
+
+          <div className="mt-4 flex justify-center">
+            <CreateRoomDialog />
           </div>
         </div>
       </div>
