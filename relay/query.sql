@@ -66,3 +66,36 @@ UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at I
 
 -- name: DeleteExpiredRefreshTokens :exec
 DELETE FROM refresh_tokens WHERE expires_at < NOW();
+
+-- name: UpsertAgentPresence :one
+INSERT INTO agent_presence (room_id, agent_name, card_json, ttl_seconds)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (room_id, agent_name)
+DO UPDATE SET card_json = EXCLUDED.card_json, last_seen = NOW(), ttl_seconds = EXCLUDED.ttl_seconds
+RETURNING *;
+
+-- name: RemoveAgentPresence :exec
+DELETE FROM agent_presence WHERE room_id = $1 AND agent_name = $2;
+
+-- name: ListAgentPresenceByRoom :many
+SELECT * FROM agent_presence
+WHERE room_id = $1 AND last_seen > NOW() - (ttl_seconds || ' seconds')::interval
+ORDER BY joined_at;
+
+-- name: UpdateAgentHeartbeat :exec
+UPDATE agent_presence SET last_seen = NOW() WHERE room_id = $1 AND agent_name = $2;
+
+-- name: DeleteExpiredAgentPresence :many
+DELETE FROM agent_presence
+WHERE last_seen < NOW() - (ttl_seconds || ' seconds')::interval
+RETURNING room_id, agent_name;
+
+-- name: ListAllPublicAgentPresence :many
+SELECT ap.* FROM agent_presence ap
+JOIN rooms r ON r.id = ap.room_id
+WHERE r.is_private = FALSE
+AND ap.last_seen > NOW() - (ap.ttl_seconds || ' seconds')::interval
+ORDER BY ap.last_seen DESC;
+
+-- name: UpdateRoomLastActive :exec
+UPDATE rooms SET last_active_at = NOW() WHERE id = $1;

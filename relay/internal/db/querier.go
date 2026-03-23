@@ -14,6 +14,7 @@ type Querier interface {
 	ClaimAnonymousRooms(ctx context.Context, arg ClaimAnonymousRoomsParams) error
 	CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error)
 	CreateRoom(ctx context.Context, arg CreateRoomParams) (Room, error)
+	DeleteExpiredAgentPresence(ctx context.Context) ([]DeleteExpiredAgentPresenceRow, error)
 	DeleteExpiredRefreshTokens(ctx context.Context) error
 	DeleteExpiredRooms(ctx context.Context) error
 	DeleteRoom(ctx context.Context, id pgtype.UUID) error
@@ -23,12 +24,18 @@ type Querier interface {
 	GetRoomByTokenHash(ctx context.Context, tokenHash string) (Room, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
+	ListAgentPresenceByRoom(ctx context.Context, roomID pgtype.UUID) ([]AgentPresence, error)
+	ListAllPublicAgentPresence(ctx context.Context) ([]AgentPresence, error)
 	ListPublicRooms(ctx context.Context, arg ListPublicRoomsParams) ([]Room, error)
 	ListRoomsByOwner(ctx context.Context, ownerID pgtype.UUID) ([]Room, error)
+	RemoveAgentPresence(ctx context.Context, arg RemoveAgentPresenceParams) error
 	RevokeAllUserRefreshTokens(ctx context.Context, userID pgtype.UUID) error
 	RevokeRefreshToken(ctx context.Context, id pgtype.UUID) error
+	UpdateAgentHeartbeat(ctx context.Context, arg UpdateAgentHeartbeatParams) error
 	UpdateRoom(ctx context.Context, arg UpdateRoomParams) (Room, error)
 	UpdateRoomActivity(ctx context.Context, id pgtype.UUID) error
+	UpdateRoomLastActive(ctx context.Context, id pgtype.UUID) error
+	UpsertAgentPresence(ctx context.Context, arg UpsertAgentPresenceParams) (AgentPresence, error)
 	UpsertUser(ctx context.Context, arg UpsertUserParams) (User, error)
 }
 

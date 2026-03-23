@@ -11,6 +11,174 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const upsertAgentPresence = `-- name: UpsertAgentPresence :one
+INSERT INTO agent_presence (room_id, agent_name, card_json, ttl_seconds)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (room_id, agent_name)
+DO UPDATE SET card_json = EXCLUDED.card_json, last_seen = NOW(), ttl_seconds = EXCLUDED.ttl_seconds
+RETURNING id, room_id, agent_name, card_json, joined_at, last_seen, ttl_seconds
+`
+
+type UpsertAgentPresenceParams struct {
+	RoomID     pgtype.UUID `json:"room_id"`
+	AgentName  string      `json:"agent_name"`
+	CardJson   []byte      `json:"card_json"`
+	TtlSeconds int32       `json:"ttl_seconds"`
+}
+
+func (q *Queries) UpsertAgentPresence(ctx context.Context, arg UpsertAgentPresenceParams) (AgentPresence, error) {
+	row := q.db.QueryRow(ctx, upsertAgentPresence, arg.RoomID, arg.AgentName, arg.CardJson, arg.TtlSeconds)
+	var i AgentPresence
+	err := row.Scan(
+		&i.ID,
+		&i.RoomID,
+		&i.AgentName,
+		&i.CardJson,
+		&i.JoinedAt,
+		&i.LastSeen,
+		&i.TtlSeconds,
+	)
+	return i, err
+}
+
+const removeAgentPresence = `-- name: RemoveAgentPresence :exec
+DELETE FROM agent_presence WHERE room_id = $1 AND agent_name = $2
+`
+
+type RemoveAgentPresenceParams struct {
+	RoomID    pgtype.UUID `json:"room_id"`
+	AgentName string      `json:"agent_name"`
+}
+
+func (q *Queries) RemoveAgentPresence(ctx context.Context, arg RemoveAgentPresenceParams) error {
+	_, err := q.db.Exec(ctx, removeAgentPresence, arg.RoomID, arg.AgentName)
+	return err
+}
+
+const listAgentPresenceByRoom = `-- name: ListAgentPresenceByRoom :many
+SELECT id, room_id, agent_name, card_json, joined_at, last_seen, ttl_seconds FROM agent_presence
+WHERE room_id = $1 AND last_seen > NOW() - (ttl_seconds || ' seconds')::interval
+ORDER BY joined_at
+`
+
+func (q *Queries) ListAgentPresenceByRoom(ctx context.Context, roomID pgtype.UUID) ([]AgentPresence, error) {
+	rows, err := q.db.Query(ctx, listAgentPresenceByRoom, roomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AgentPresence
+	for rows.Next() {
+		var i AgentPresence
+		if err := rows.Scan(
+			&i.ID,
+			&i.RoomID,
+			&i.AgentName,
+			&i.CardJson,
+			&i.JoinedAt,
+			&i.LastSeen,
+			&i.TtlSeconds,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateAgentHeartbeat = `-- name: UpdateAgentHeartbeat :exec
+UPDATE agent_presence SET last_seen = NOW() WHERE room_id = $1 AND agent_name = $2
+`
+
+type UpdateAgentHeartbeatParams struct {
+	RoomID    pgtype.UUID `json:"room_id"`
+	AgentName string      `json:"agent_name"`
+}
+
+func (q *Queries) UpdateAgentHeartbeat(ctx context.Context, arg UpdateAgentHeartbeatParams) error {
+	_, err := q.db.Exec(ctx, updateAgentHeartbeat, arg.RoomID, arg.AgentName)
+	return err
+}
+
+const deleteExpiredAgentPresence = `-- name: DeleteExpiredAgentPresence :many
+DELETE FROM agent_presence
+WHERE last_seen < NOW() - (ttl_seconds || ' seconds')::interval
+RETURNING room_id, agent_name
+`
+
+type DeleteExpiredAgentPresenceRow struct {
+	RoomID    pgtype.UUID `json:"room_id"`
+	AgentName string      `json:"agent_name"`
+}
+
+func (q *Queries) DeleteExpiredAgentPresence(ctx context.Context) ([]DeleteExpiredAgentPresenceRow, error) {
+	rows, err := q.db.Query(ctx, deleteExpiredAgentPresence)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []DeleteExpiredAgentPresenceRow
+	for rows.Next() {
+		var i DeleteExpiredAgentPresenceRow
+		if err := rows.Scan(&i.RoomID, &i.AgentName); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllPublicAgentPresence = `-- name: ListAllPublicAgentPresence :many
+SELECT ap.id, ap.room_id, ap.agent_name, ap.card_json, ap.joined_at, ap.last_seen, ap.ttl_seconds FROM agent_presence ap
+JOIN rooms r ON r.id = ap.room_id
+WHERE r.is_private = FALSE
+AND ap.last_seen > NOW() - (ap.ttl_seconds || ' seconds')::interval
+ORDER BY ap.last_seen DESC
+`
+
+func (q *Queries) ListAllPublicAgentPresence(ctx context.Context) ([]AgentPresence, error) {
+	rows, err := q.db.Query(ctx, listAllPublicAgentPresence)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AgentPresence
+	for rows.Next() {
+		var i AgentPresence
+		if err := rows.Scan(
+			&i.ID,
+			&i.RoomID,
+			&i.AgentName,
+			&i.CardJson,
+			&i.JoinedAt,
+			&i.LastSeen,
+			&i.TtlSeconds,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateRoomLastActive = `-- name: UpdateRoomLastActive :exec
+UPDATE rooms SET last_active_at = NOW() WHERE id = $1
+`
+
+func (q *Queries) UpdateRoomLastActive(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, updateRoomLastActive, id)
+	return err
+}
+
 const claimAnonymousRooms = `-- name: ClaimAnonymousRooms :exec
 UPDATE rooms SET owner_id = $1, anonymous_session_id = NULL, expires_at = NULL
 WHERE anonymous_session_id = $2 AND owner_id IS NULL

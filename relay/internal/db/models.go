@@ -8,6 +8,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AgentPresence struct {
+	ID         pgtype.UUID        `json:"id"`
+	RoomID     pgtype.UUID        `json:"room_id"`
+	AgentName  string             `json:"agent_name"`
+	CardJson   []byte             `json:"card_json"`
+	JoinedAt   pgtype.Timestamptz `json:"joined_at"`
+	LastSeen   pgtype.Timestamptz `json:"last_seen"`
+	TtlSeconds int32              `json:"ttl_seconds"`
+}
+
 type RefreshToken struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"user_id"`
