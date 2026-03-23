@@ -13,7 +13,7 @@ Quorum is built in four phases, derived from the natural dependency order of its
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Monorepo, existing frontend import, database schema, Go server skeleton, auth, and rate limiting (completed 2026-03-23)
-- [ ] **Phase 2: A2A Core** - Room event loop, message/send relay, agent card publishing, and room-scoped discovery
+- [x] **Phase 2: A2A Core** - Room event loop, message/send relay, agent card publishing, and room-scoped discovery (completed 2026-03-23)
 - [ ] **Phase 3: Streaming and Deploy** - SSE streaming, goroutine cleanup, nginx config, and Go server live on Hostinger
 - [ ] **Phase 4: Frontend Integration** - Wire frontend stubs to real API, explore directory, integration snippets, and Vercel deploy
 
@@ -47,11 +47,11 @@ Plans:
   3. An agent can filter room members by skill ID or tag and receive only matching Agent Cards
   4. When an agent disconnects or its TTL expires, its Agent Card no longer appears in discovery results
   5. Sending a request without the A2A-Version: 1.0 header returns the correct A2A error code
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 02-01-PLAN.md — Room event loop: per-room goroutine hub, PresenceRegistry, HubManager, type-safe RoomID, RoomEvent model, agent_presence migration, two-room isolation test
-- [ ] 02-02-PLAN.md — A2A message/send relay and discovery endpoints: RoomExecutor (AgentExecutor), A2A-Version middleware, join/agents/info/heartbeat REST endpoints, global agent directory, presence reaper
+- [x] 02-02-PLAN.md — A2A message/send relay and discovery endpoints: RoomExecutor (AgentExecutor), A2A-Version middleware, join/agents/info/heartbeat REST endpoints, global agent directory, presence reaper
 
 ### Phase 3: Streaming and Deploy
 **Goal**: Agents can subscribe to a room's SSE stream and receive relayed messages in real time; the Go server is running on the Hostinger VPS behind Traefik (via Easypanel) with TLS, SSE streams stay alive through the proxy, and zero goroutine leaks are confirmed under disconnect scenarios.
@@ -94,6 +94,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 4/4 | Complete   | 2026-03-23 |
-| 2. A2A Core | 0/2 | Planning complete | - |
+| 2. A2A Core | 2/2 | Complete   | 2026-03-23 |
 | 3. Streaming and Deploy | 0/2 | Planning complete | - |
 | 4. Frontend Integration | 0/4 | Planning complete | - |

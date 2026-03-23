@@ -34,21 +34,21 @@
 
 ### A2A Protocol — Messages
 
-- [ ] **A2A-01**: Relay handles `message/send` (synchronous JSON-RPC 2.0) between agents in a room
+- [x] **A2A-01**: Relay handles `message/send` (synchronous JSON-RPC 2.0) between agents in a room
 - [ ] **A2A-02**: Relay handles `message/stream` (SSE streaming) between agents in a room
 - [ ] **A2A-03**: SSE connections send heartbeat comments every 15-25 seconds
-- [ ] **A2A-04**: Relay returns proper A2A JSON-RPC error codes on failure
-- [ ] **A2A-05**: All A2A endpoints require `A2A-Version: 1.0` header
+- [x] **A2A-04**: Relay returns proper A2A JSON-RPC error codes on failure
+- [x] **A2A-05**: All A2A endpoints require `A2A-Version: 1.0` header
 
 ### A2A Protocol — Discovery
 
 - [x] **DISC-01**: Agent publishes its Agent Card when joining a room
-- [ ] **DISC-02**: Agent can list all agents currently in a room (returns Agent Cards)
-- [ ] **DISC-03**: Agent can filter room members by skill, tag, or capability
+- [x] **DISC-02**: Agent can list all agents currently in a room (returns Agent Cards)
+- [x] **DISC-03**: Agent can filter room members by skill, tag, or capability
 - [x] **DISC-04**: Agent Card is removed from room registry on disconnect or TTL expiry
-- [ ] **DISC-05**: Room-level Agent Card endpoint serves the room's relay card
-- [ ] **DISC-06**: Public Agent Card (basic info: name, description, skills) visible to anyone without auth
-- [ ] **DISC-07**: Extended Agent Card (full capabilities, endpoints, input/output modes) requires bearer token
+- [x] **DISC-05**: Room-level Agent Card endpoint serves the room's relay card
+- [x] **DISC-06**: Public Agent Card (basic info: name, description, skills) visible to anyone without auth
+- [x] **DISC-07**: Extended Agent Card (full capabilities, endpoints, input/output modes) requires bearer token
 
 ### Frontend — Home Page
 
@@ -129,18 +129,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-05 | Phase 1 | Complete |
 | AUTH-06 | Phase 1 | Complete |
 | AUTH-07 | Phase 1 | Complete |
-| A2A-01 | Phase 2 | Pending |
+| A2A-01 | Phase 2 | Complete |
 | A2A-02 | Phase 3 | Pending |
 | A2A-03 | Phase 3 | Pending |
-| A2A-04 | Phase 2 | Pending |
-| A2A-05 | Phase 2 | Pending |
+| A2A-04 | Phase 2 | Complete |
+| A2A-05 | Phase 2 | Complete |
 | DISC-01 | Phase 2 | Complete |
-| DISC-02 | Phase 2 | Pending |
-| DISC-03 | Phase 2 | Pending |
+| DISC-02 | Phase 2 | Complete |
+| DISC-03 | Phase 2 | Complete |
 | DISC-04 | Phase 2 | Complete |
-| DISC-05 | Phase 2 | Pending |
-| DISC-06 | Phase 2 | Pending |
-| DISC-07 | Phase 2 | Pending |
+| DISC-05 | Phase 2 | Complete |
+| DISC-06 | Phase 2 | Complete |
+| DISC-07 | Phase 2 | Complete |
 | HOME-01 | Phase 4 | Pending |
 | HOME-02 | Phase 4 | Pending |
 | HOME-03 | Phase 4 | Pending |

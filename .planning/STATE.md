@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 02-a2a-core 02-01-PLAN.md — hub package, presence registry, agent_presence migration
-last_updated: "2026-03-23T01:19:31.555Z"
+stopped_at: Completed 02-a2a-core 02-02-PLAN.md — A2A executor, discovery endpoints, presence reaper
+last_updated: "2026-03-23T01:32:20.485Z"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 12
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -51,6 +51,7 @@ Plan: 2 of 2
 | Phase 01-foundation P03 | 3 | 2 tasks | 7 files |
 | Phase 01-foundation P04 | 7 | 2 tasks | 8 files |
 | Phase 02-a2a-core P01 | 8 | 2 tasks | 13 files |
+| Phase 02 P02 | 8 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 02-a2a-core]: RoomHub owns subscriber map exclusively in goroutine (no external locks on that map); PresenceRegistry has its own RWMutex for concurrent reads
 - [Phase 02-a2a-core]: Public card strips URL, Capabilities, SecuritySchemes to prevent leaking private agent endpoints to unauthenticated callers
 - [Phase 02-a2a-core]: sqlc generate skipped due to Xcode license environment issue; generated code written manually matching sqlc v1.27.0 pgx/v5 output patterns
+- [Phase 02]: Single dynamic A2A handler per-request instead of per-room registration avoids dynamic route manipulation in chi
+- [Phase 02]: StatusUpdateEvent.Final=true required to signal SDK task completion
+- [Phase 02]: Root context created in main() cancelled on SIGINT/SIGTERM to propagate shutdown to hub goroutines and reaper
 
 ### Pending Todos
 
@@ -90,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T01:19:31.552Z
-Stopped at: Completed 02-a2a-core 02-01-PLAN.md — hub package, presence registry, agent_presence migration
+Last session: 2026-03-23T01:32:20.483Z
+Stopped at: Completed 02-a2a-core 02-02-PLAN.md — A2A executor, discovery endpoints, presence reaper
 Resume file: None
