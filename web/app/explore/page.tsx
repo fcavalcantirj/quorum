@@ -15,8 +15,9 @@ export default async function ExplorePage() {
   let rooms: Room[] | undefined
   try {
     rooms = await serverFetch<Room[]>("/rooms?public=true")
-  } catch {
-    // API unavailable — RoomGrid will use mock data
+    console.log("[explore] fetched rooms:", JSON.stringify(rooms?.[0]))
+  } catch (e) {
+    console.error("[explore] fetch failed:", e)
   }
 
   return (
