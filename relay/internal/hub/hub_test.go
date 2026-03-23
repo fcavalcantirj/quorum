@@ -8,9 +8,16 @@ import (
 
 	"github.com/a2aproject/a2a-go/a2a"
 	"github.com/google/uuid"
+	"go.uber.org/goleak"
 
 	"github.com/fcavalcanti/quorum/relay/internal/hub"
 )
+
+// TestMain enables goleak for all tests in this package.
+// Any goroutine leak will cause the entire test run to fail with a clear report.
+func TestMain(m *testing.M) {
+	goleak.VerifyTestMain(m)
+}
 
 // makeLogger returns a discard logger suitable for tests.
 func makeLogger() *slog.Logger {
@@ -392,4 +399,151 @@ func TestPresenceRegistryAllPublicAgents(t *testing.T) {
 	if len(all) != 2 {
 		t.Errorf("AllPublicAgents: expected 2, got %d", len(all))
 	}
+}
+
+// Test: SSE connection limit is enforced — (MAX+1)th subscribe returns ErrRoomAtCapacity.
+func TestSSEConnectionLimit(t *testing.T) {
+	const maxSSE = 3
+	registry := hub.NewPresenceRegistry()
+	roomID := hub.NewRoomID(uuid.New())
+	h := hub.NewRoomHub(roomID, registry, makeLogger(), maxSSE)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go h.Run(ctx, registry)
+
+	// Subscribe up to the limit — all should succeed.
+	for i := 0; i < maxSSE; i++ {
+		name := "agent-limit-" + string(rune('a'+i))
+		_, err := h.Subscribe(name, makeCard(name))
+		if err != nil {
+			t.Fatalf("Subscribe %d/%d failed unexpectedly: %v", i+1, maxSSE, err)
+		}
+	}
+
+	// One more subscribe should return ErrRoomAtCapacity.
+	_, err := h.Subscribe("agent-overflow", makeCard("agent-overflow"))
+	if err == nil {
+		t.Fatal("expected ErrRoomAtCapacity on subscribe beyond limit, got nil error")
+	}
+	if err != hub.ErrRoomAtCapacity {
+		t.Errorf("expected ErrRoomAtCapacity, got: %v", err)
+	}
+}
+
+// Test: After unsubscribing one agent from a full room, a new agent can subscribe.
+func TestSSEConnectionLimitAfterUnsubscribe(t *testing.T) {
+	const maxSSE = 3
+	registry := hub.NewPresenceRegistry()
+	roomID := hub.NewRoomID(uuid.New())
+	h := hub.NewRoomHub(roomID, registry, makeLogger(), maxSSE)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go h.Run(ctx, registry)
+
+	// Fill to capacity.
+	for i := 0; i < maxSSE; i++ {
+		name := "agent-fill-" + string(rune('a'+i))
+		_, err := h.Subscribe(name, makeCard(name))
+		if err != nil {
+			t.Fatalf("Subscribe %d/%d failed: %v", i+1, maxSSE, err)
+		}
+	}
+
+	// Unsubscribe one — opens a slot.
+	h.Unsubscribe("agent-fill-a")
+	// Wait for close to propagate through hub goroutine.
+	time.Sleep(50 * time.Millisecond)
+
+	// A new agent should now succeed.
+	_, err := h.Subscribe("agent-new", makeCard("agent-new"))
+	if err != nil {
+		t.Fatalf("Subscribe after unsubscribe failed: %v", err)
+	}
+}
+
+// Test: After subscribing and unsubscribing a single agent, no goroutines are leaked.
+func TestSSEDisconnectNoLeak(t *testing.T) {
+	registry := hub.NewPresenceRegistry()
+	roomID := hub.NewRoomID(uuid.New())
+	h := hub.NewRoomHub(roomID, registry, makeLogger(), 10)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go h.Run(ctx, registry)
+
+	ch, err := h.Subscribe("agent-leak-test", makeCard("agent-leak-test"))
+	if err != nil {
+		t.Fatalf("Subscribe failed: %v", err)
+	}
+
+	// Unsubscribe — hub closes the channel.
+	h.Unsubscribe("agent-leak-test")
+
+	// Drain the channel until it is closed.
+	for range ch {
+	}
+
+	// Cancel context to shut down the hub goroutine cleanly.
+	cancel()
+
+	// Wait for hub goroutine to finish.
+	select {
+	case <-h.Done():
+	case <-time.After(2 * time.Second):
+		t.Fatal("hub goroutine did not exit after context cancel")
+	}
+
+	// Small sleep to let goroutine scheduler fully clean up.
+	time.Sleep(50 * time.Millisecond)
+
+	goleak.VerifyNone(t)
+}
+
+// Test: After subscribing 5 agents and unsubscribing all, no goroutines are leaked.
+func TestMultipleSSEDisconnectNoLeak(t *testing.T) {
+	const count = 5
+	registry := hub.NewPresenceRegistry()
+	roomID := hub.NewRoomID(uuid.New())
+	h := hub.NewRoomHub(roomID, registry, makeLogger(), count+1)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go h.Run(ctx, registry)
+
+	channels := make([]<-chan hub.RoomEvent, count)
+	for i := 0; i < count; i++ {
+		name := "multi-agent-" + string(rune('a'+i))
+		ch, err := h.Subscribe(name, makeCard(name))
+		if err != nil {
+			t.Fatalf("Subscribe %d failed: %v", i, err)
+		}
+		channels[i] = ch
+	}
+
+	// Unsubscribe all agents.
+	for i := 0; i < count; i++ {
+		name := "multi-agent-" + string(rune('a'+i))
+		h.Unsubscribe(name)
+	}
+
+	// Drain all closed channels.
+	for _, ch := range channels {
+		for range ch {
+		}
+	}
+
+	// Cancel context to shut down the hub goroutine.
+	cancel()
+
+	// Wait for hub goroutine to finish.
+	select {
+	case <-h.Done():
+	case <-time.After(2 * time.Second):
+		t.Fatal("hub goroutine did not exit after context cancel")
+	}
+
+	time.Sleep(50 * time.Millisecond)
+	goleak.VerifyNone(t)
 }
