@@ -8,17 +8,21 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/fcavalcanti/quorum/relay/internal/db"
-	"github.com/fcavalcanti/quorum/relay/internal/hub"
 )
 
-// MessageHandler serves the polling endpoint for reading room messages.
+// MessageHandler serves the polling endpoint for reading room messages from DB.
 type MessageHandler struct {
-	Queries  *db.Queries
-	Messages *hub.MessageStore
+	Queries *db.Queries
+}
+
+type messageResponse struct {
+	ID        int64  `json:"id"`
+	AgentName string `json:"agent_name"`
+	Content   string `json:"content"`
+	Timestamp string `json:"timestamp"`
 }
 
 // GetMessages handles GET /r/{slug}/messages?after=N
-// Returns messages with ID > after. Agents poll this to receive messages.
 func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	slug := chi.URLParam(r, "slug")
 	room, err := h.Queries.GetRoomBySlug(r.Context(), slug)
@@ -28,16 +32,36 @@ func (h *MessageHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	afterStr := r.URL.Query().Get("after")
-	afterID := 0
+	afterID := int64(0)
 	if afterStr != "" {
-		if v, err := strconv.Atoi(afterStr); err == nil {
+		if v, err := strconv.ParseInt(afterStr, 10, 64); err == nil {
 			afterID = v
 		}
 	}
 
-	roomID := hub.NewRoomID(room.ID.Bytes)
-	msgs := h.Messages.Since(roomID, afterID)
+	var msgs []db.Message
+	if afterID > 0 {
+		msgs, err = h.Queries.ListMessagesSince(r.Context(), db.ListMessagesSinceParams{
+			RoomID:  room.ID,
+			AfterID: afterID,
+		})
+	} else {
+		msgs, err = h.Queries.ListMessages(r.Context(), room.ID)
+	}
+	if err != nil {
+		msgs = []db.Message{}
+	}
+
+	resp := make([]messageResponse, 0, len(msgs))
+	for _, m := range msgs {
+		resp = append(resp, messageResponse{
+			ID:        m.ID,
+			AgentName: m.AgentName,
+			Content:   m.Content,
+			Timestamp: m.CreatedAt.Time.Format("2006-01-02T15:04:05Z07:00"),
+		})
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(msgs)
+	json.NewEncoder(w).Encode(resp)
 }

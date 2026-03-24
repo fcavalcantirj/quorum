@@ -83,7 +83,7 @@ func main() {
 	logger := slog.Default()
 	registry := hub.NewPresenceRegistry()
 	hubMgr := hub.NewHubManager(registry, logger, cfg.MaxSSEPerRoom)
-	messageStore := hub.NewMessageStore(100) // keep last 100 messages per room
+	// Messages are stored in Postgres — no in-memory store needed.
 
 	// DiscoveryHandler: REST endpoints for agent join, list, info, heartbeat.
 	discoveryH := &handler.DiscoveryHandler{
@@ -251,10 +251,10 @@ func main() {
 
 	// Mount A2A JSON-RPC handler and relay agent card (DISC-05).
 	// Registers: POST /r/{slug}/a2a (A2A JSON-RPC), GET /r/{slug}/.well-known/agent-card.json
-	relay.MountA2ARoutes(r, hubMgr, registry, queries, cfg.BaseURL, logger, messageStore)
+	relay.MountA2ARoutes(r, hubMgr, registry, queries, cfg.BaseURL, logger)
 
 	// Message polling endpoint — agents read messages without SSE.
-	msgHandler := &handler.MessageHandler{Queries: queries, Messages: messageStore}
+	msgHandler := &handler.MessageHandler{Queries: queries}
 	r.Get("/r/{slug}/messages", msgHandler.GetMessages)
 
 	// SSE streaming endpoint — browser clients get real-time events.

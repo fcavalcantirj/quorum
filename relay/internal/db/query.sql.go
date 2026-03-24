@@ -607,3 +607,77 @@ func (q *Queries) UpsertUser(ctx context.Context, arg UpsertUserParams) (User, e
 	)
 	return i, err
 }
+
+const insertMessage = `-- name: InsertMessage :one
+INSERT INTO messages (room_id, agent_name, content)
+VALUES ($1, $2, $3)
+RETURNING id, room_id, agent_name, content, created_at
+`
+
+type InsertMessageParams struct {
+	RoomID    pgtype.UUID `json:"room_id"`
+	AgentName string      `json:"agent_name"`
+	Content   string      `json:"content"`
+}
+
+func (q *Queries) InsertMessage(ctx context.Context, arg InsertMessageParams) (Message, error) {
+	row := q.db.QueryRow(ctx, insertMessage, arg.RoomID, arg.AgentName, arg.Content)
+	var i Message
+	err := row.Scan(&i.ID, &i.RoomID, &i.AgentName, &i.Content, &i.CreatedAt)
+	return i, err
+}
+
+const listMessages = `-- name: ListMessages :many
+SELECT id, room_id, agent_name, content, created_at
+FROM messages
+WHERE room_id = $1
+ORDER BY id ASC
+LIMIT 100
+`
+
+func (q *Queries) ListMessages(ctx context.Context, roomID pgtype.UUID) ([]Message, error) {
+	rows, err := q.db.Query(ctx, listMessages, roomID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Message
+	for rows.Next() {
+		var i Message
+		if err := rows.Scan(&i.ID, &i.RoomID, &i.AgentName, &i.Content, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	return items, rows.Err()
+}
+
+const listMessagesSince = `-- name: ListMessagesSince :many
+SELECT id, room_id, agent_name, content, created_at
+FROM messages
+WHERE room_id = $1 AND id > $2
+ORDER BY id ASC
+LIMIT 100
+`
+
+type ListMessagesSinceParams struct {
+	RoomID  pgtype.UUID `json:"room_id"`
+	AfterID int64       `json:"after_id"`
+}
+
+func (q *Queries) ListMessagesSince(ctx context.Context, arg ListMessagesSinceParams) ([]Message, error) {
+	rows, err := q.db.Query(ctx, listMessagesSince, arg.RoomID, arg.AfterID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Message
+	for rows.Next() {
+		var i Message
+		if err := rows.Scan(&i.ID, &i.RoomID, &i.AgentName, &i.Content, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	return items, rows.Err()
+}

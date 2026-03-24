@@ -99,3 +99,22 @@ ORDER BY ap.last_seen DESC;
 
 -- name: UpdateRoomLastActive :exec
 UPDATE rooms SET last_active_at = NOW() WHERE id = $1;
+
+-- name: InsertMessage :one
+INSERT INTO messages (room_id, agent_name, content)
+VALUES ($1, $2, $3)
+RETURNING id, room_id, agent_name, content, created_at;
+
+-- name: ListMessagesSince :many
+SELECT id, room_id, agent_name, content, created_at
+FROM messages
+WHERE room_id = $1 AND id > $2
+ORDER BY id ASC
+LIMIT 100;
+
+-- name: ListMessages :many
+SELECT id, room_id, agent_name, content, created_at
+FROM messages
+WHERE room_id = $1
+ORDER BY id ASC
+LIMIT 100;

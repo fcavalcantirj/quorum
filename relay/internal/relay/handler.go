@@ -9,6 +9,7 @@ import (
 	"github.com/a2aproject/a2a-go/a2a"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/fcavalcanti/quorum/relay/internal/db"
 	"github.com/fcavalcanti/quorum/relay/internal/hub"
@@ -43,9 +44,8 @@ func MountA2ARoutes(
 	queries *db.Queries,
 	baseURL string,
 	logger *slog.Logger,
-	messages *hub.MessageStore,
 ) {
-	a2aHandler := handleA2ARequest(hubMgr, queries, logger, messages)
+	a2aHandler := handleA2ARequest(hubMgr, queries, logger)
 	wrappedHandler := middleware.A2AVersionGuard(a2aHandler)
 	r.Post("/r/{slug}/a2a", wrappedHandler.ServeHTTP)
 
@@ -67,7 +67,6 @@ func handleA2ARequest(
 	hubMgr *hub.HubManager,
 	queries *db.Queries,
 	logger *slog.Logger,
-	messages *hub.MessageStore,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		slug := chi.URLParam(r, "slug")
@@ -90,7 +89,7 @@ func handleA2ARequest(
 
 		switch req.Method {
 		case "message/send":
-			handleMessageSend(w, r, req, roomID, hubMgr, messages, logger)
+			handleMessageSend(w, r, req, roomID, pgtype.UUID{Bytes: room.ID.Bytes, Valid: true}, hubMgr, queries, logger)
 		default:
 			writeJSONRPCError(w, -32601, "method not found: "+req.Method, req.ID)
 		}
@@ -102,8 +101,9 @@ func handleMessageSend(
 	r *http.Request,
 	req jsonRPCRequest,
 	roomID hub.RoomID,
+	roomDBID pgtype.UUID,
 	hubMgr *hub.HubManager,
-	messages *hub.MessageStore,
+	queries *db.Queries,
 	logger *slog.Logger,
 ) {
 	var params messageSendParams
@@ -131,9 +131,13 @@ func handleMessageSend(
 		}
 	}
 
-	// Store message for polling
-	if messages != nil && textContent != "" {
-		messages.Append(roomID, agentName, textContent)
+	// Store message in database
+	if queries != nil && textContent != "" {
+		_, _ = queries.InsertMessage(r.Context(), db.InsertMessageParams{
+			RoomID:    roomDBID,
+			AgentName: agentName,
+			Content:   textContent,
+		})
 	}
 
 	// Broadcast to SSE subscribers if hub exists for this room.

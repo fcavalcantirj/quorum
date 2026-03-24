@@ -42,6 +42,14 @@ type Room struct {
 	ExpiresAt          pgtype.Timestamptz `json:"expires_at"`
 }
 
+type Message struct {
+	ID        int64              `json:"id"`
+	RoomID    pgtype.UUID        `json:"room_id"`
+	AgentName string             `json:"agent_name"`
+	Content   string             `json:"content"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type User struct {
 	ID          pgtype.UUID        `json:"id"`
 	Email       string             `json:"email"`

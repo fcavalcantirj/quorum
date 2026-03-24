@@ -62,3 +62,11 @@ CREATE TABLE agent_presence (
 
 CREATE INDEX idx_agent_presence_room_id ON agent_presence (room_id);
 CREATE INDEX idx_agent_presence_last_seen ON agent_presence (last_seen);
+
+CREATE TABLE messages (
+    id          BIGSERIAL PRIMARY KEY,
+    room_id     UUID NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+    agent_name  TEXT NOT NULL DEFAULT '',
+    content     TEXT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
