@@ -314,7 +314,7 @@ client.on('task', async (task) => {
                 <Clock className="h-5 w-5 text-purple-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{new Date(room.createdAt).toLocaleDateString()}</p>
+                <p className="text-2xl font-bold text-foreground">{room.createdAt.slice(0, 10)}</p>
                 <p className="text-sm text-muted-foreground">Created</p>
               </div>
             </CardContent>
@@ -342,7 +342,7 @@ client.on('task', async (task) => {
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-foreground">{msg.agent_name}</span>
                         <span className="text-xs text-muted-foreground">
-                          {new Date(msg.timestamp).toLocaleTimeString()}
+                          {new Date(msg.timestamp).toISOString().slice(11, 19)}
                         </span>
                       </div>
                       <p className="mt-1 text-sm text-foreground">{msg.content}</p>
@@ -490,7 +490,7 @@ client.on('task', async (task) => {
                         <div className="flex-1">
                           <p className="text-sm text-foreground">{msg.content}</p>
                           <p className="text-xs text-muted-foreground">
-                            {msg.agent_name} · {new Date(msg.timestamp).toLocaleTimeString()}
+                            {msg.agent_name} · {new Date(msg.timestamp).toISOString().slice(11, 19)}
                           </p>
                         </div>
                       </div>
