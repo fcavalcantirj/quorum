@@ -276,9 +276,10 @@ func main() {
 	srv := &http.Server{
 		Addr:         addr,
 		Handler:      r,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout: 15 * time.Second,
+		// WriteTimeout disabled — SSE connections are long-lived.
+		// Per-request timeouts handled via context for non-SSE routes.
+		IdleTimeout: 120 * time.Second,
 	}
 
 	// Listen for OS signals in background, then shutdown gracefully.
