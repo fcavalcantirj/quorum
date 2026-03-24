@@ -105,9 +105,11 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260323-g8m | Post-MVP fixes: agent_name, mock data, create room, hub broadcast | 2026-03-23 | 8d76199 | [260323-g8m](./quick/260323-g8m-post-mvp-fixes-agent-name-mock-data-crea/) |
+| 260323-uc6 | Static files, room stats API, room cards UI, nav fix | 2026-03-24 | eaea31d | [260323-uc6](./quick/260323-uc6-static-files-room-stats-api-room-cards-u/) |
 
 ## Session Continuity
 
-Last session: 2026-03-23T15:12:20.934Z
-Stopped at: Completed quick/260323-g8m (Tasks 1-2), checkpoint on Task 3 (OAuth)
+Last activity: 2026-03-24 - Completed quick task 260323-uc6: Static files, room stats API, room cards UI, nav fix
+Last session: 2026-03-24T01:00:00.000Z
+Stopped at: Completed quick/260323-uc6
 Resume file: None
