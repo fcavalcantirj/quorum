@@ -4,6 +4,7 @@ import { ExploreHero } from "@/components/explore-hero"
 import { RoomFilters } from "@/components/room-filters"
 import { RoomGrid } from "@/components/room-grid"
 import { serverFetch } from "@/lib/api"
+import { getSession } from "@/lib/session"
 import type { Room } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
@@ -21,9 +22,11 @@ export default async function ExplorePage() {
     // API unavailable — RoomGrid will use mock data
   }
 
+  const session = await getSession()
+
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation userName={session?.name} />
       <main className="pt-20">
         <ExploreHero />
         <RoomFilters />

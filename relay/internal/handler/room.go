@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -43,12 +44,13 @@ func parseUserUUID(w http.ResponseWriter, r *http.Request) (pgtype.UUID, bool) {
 type RoomHandler struct {
 	svc      *service.RoomService
 	registry *hub.PresenceRegistry
+	queries  *db.Queries
 	baseURL  string
 }
 
 // NewRoomHandler creates a new RoomHandler wired to the provided service.
-func NewRoomHandler(svc *service.RoomService, baseURL string, registry *hub.PresenceRegistry) *RoomHandler {
-	return &RoomHandler{svc: svc, baseURL: baseURL, registry: registry}
+func NewRoomHandler(svc *service.RoomService, baseURL string, registry *hub.PresenceRegistry, queries *db.Queries) *RoomHandler {
+	return &RoomHandler{svc: svc, baseURL: baseURL, registry: registry, queries: queries}
 }
 
 type createRoomRequest struct {
@@ -66,15 +68,18 @@ type createRoomResponse struct {
 }
 
 type roomResponse struct {
-	Slug        string   `json:"slug"`
-	DisplayName string   `json:"display_name"`
-	Description string   `json:"description,omitempty"`
-	Tags        []string `json:"tags"`
-	IsPrivate   bool     `json:"is_private"`
-	AgentCount  int      `json:"agent_count"`
-	URL         string   `json:"url"`
-	A2AURL      string   `json:"a2a_url"`
-	CreatedAt   string   `json:"created_at"`
+	Slug          string   `json:"slug"`
+	DisplayName   string   `json:"display_name"`
+	Description   string   `json:"description,omitempty"`
+	Tags          []string `json:"tags"`
+	IsPrivate     bool     `json:"is_private"`
+	AgentCount    int      `json:"agent_count"`
+	TotalMessages int64    `json:"total_messages"`
+	UniqueAgents  int64    `json:"unique_agents"`
+	LastMessageAt *string  `json:"last_message_at,omitempty"`
+	URL           string   `json:"url"`
+	A2AURL        string   `json:"a2a_url"`
+	CreatedAt     string   `json:"created_at"`
 }
 
 func (h *RoomHandler) buildRoomResponse(room *db.Room) roomResponse {
@@ -93,6 +98,20 @@ func (h *RoomHandler) buildRoomResponse(room *db.Room) roomResponse {
 	if h.registry != nil && room.ID.Valid {
 		roomID := hub.NewRoomID(room.ID.Bytes)
 		resp.AgentCount = h.registry.AgentCount(roomID)
+	}
+	// Enrich with message stats from DB
+	if h.queries != nil && room.ID.Valid {
+		stats, err := h.queries.GetRoomStats(context.Background(), room.ID)
+		if err != nil {
+			slog.Warn("failed to fetch room stats", "room", room.Slug, "error", err)
+		} else {
+			resp.TotalMessages = stats.TotalMessages
+			resp.UniqueAgents = stats.UniqueAgents
+			if stats.LastMessageAt.Valid {
+				t := stats.LastMessageAt.Time.Format("2006-01-02T15:04:05Z07:00")
+				resp.LastMessageAt = &t
+			}
+		}
 	}
 	return resp
 }

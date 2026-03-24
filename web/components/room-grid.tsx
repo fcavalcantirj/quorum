@@ -7,7 +7,6 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import {
   Users,
-  Activity,
   Copy,
   ExternalLink,
   Lock,
@@ -19,11 +18,33 @@ import {
   Search as SearchIcon,
   Bot,
   Sparkles,
+  Activity,
+  MessageSquare,
 } from "lucide-react"
 import type { Room } from "@/lib/types"
 
 // Map icon by index for API rooms that don't have an icon field
 const iconPool = [Code, Database, SearchIcon, FileText, Zap, Sparkles, Bot, Activity]
+
+function timeAgo(isoString: string): string {
+  const now = Date.now()
+  const then = new Date(isoString).getTime()
+  const diffMs = now - then
+  if (diffMs < 0) return "just now"
+  const diffMin = Math.floor(diffMs / 60000)
+  if (diffMin < 1) return "just now"
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHours = Math.floor(diffMin / 60)
+  if (diffHours < 24) return `${diffHours}h ago`
+  const diffDays = Math.floor(diffHours / 24)
+  return `${diffDays}d ago`
+}
+
+function isHot(isoString: string | null): boolean {
+  if (!isoString) return false
+  const diffMs = Date.now() - new Date(isoString).getTime()
+  return diffMs >= 0 && diffMs < 5 * 60 * 1000
+}
 
 interface RoomGridProps {
   apiRooms?: Room[]
@@ -38,7 +59,9 @@ export function RoomGrid({ apiRooms }: RoomGridProps) {
         icon: iconPool[i % iconPool.length],
         isPublic: !r.is_private,
         agentCount: r.agent_count || 0,
-        activeNow: r.agent_count || 0,
+        totalMessages: r.total_messages || 0,
+        uniqueAgents: r.unique_agents || 0,
+        lastMessageAt: r.last_message_at || null,
         tags: r.tags || [],
         skills: [] as string[],
         createdAt: r.created_at,
@@ -78,6 +101,7 @@ export function RoomGrid({ apiRooms }: RoomGridProps) {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {rooms.map((room) => {
               const Icon = room.icon
+              const hot = isHot(room.lastMessageAt)
               return (
                 <Card key={room.id} className="group flex flex-col transition-colors hover:border-accent/50">
                   <CardHeader className="pb-3">
@@ -86,6 +110,9 @@ export function RoomGrid({ apiRooms }: RoomGridProps) {
                         <Icon className="h-5 w-5 text-accent" />
                       </div>
                       <div className="flex items-center gap-1.5">
+                        {hot && (
+                          <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+                        )}
                         {room.isPublic ? (
                           <Globe className="h-4 w-4 text-muted-foreground" />
                         ) : (
@@ -111,12 +138,29 @@ export function RoomGrid({ apiRooms }: RoomGridProps) {
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Users className="h-3.5 w-3.5" />
-                        <span>{room.agentCount} agents</span>
+                        <span>{room.uniqueAgents || room.agentCount} agents</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
-                        <span>{room.activeNow} active</span>
+                        <MessageSquare className="h-3.5 w-3.5" />
+                        <span>{room.totalMessages} msgs</span>
                       </div>
+                    </div>
+
+                    {/* Activity indicator */}
+                    <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                      {hot ? (
+                        <>
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-500" />
+                          <span className="text-green-500">{timeAgo(room.lastMessageAt!)}</span>
+                        </>
+                      ) : room.lastMessageAt ? (
+                        <>
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
+                          <span>{timeAgo(room.lastMessageAt)}</span>
+                        </>
+                      ) : (
+                        <span>No activity</span>
+                      )}
                     </div>
 
                     {/* Skills */}

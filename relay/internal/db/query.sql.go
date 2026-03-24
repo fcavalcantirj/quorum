@@ -652,6 +652,24 @@ func (q *Queries) ListMessages(ctx context.Context, roomID pgtype.UUID) ([]Messa
 	return items, rows.Err()
 }
 
+const getRoomStats = `-- name: GetRoomStats :one
+SELECT COUNT(*) as total_messages, COUNT(DISTINCT agent_name) as unique_agents, MAX(created_at) as last_message_at
+FROM messages WHERE room_id = $1
+`
+
+type GetRoomStatsRow struct {
+	TotalMessages int64              `json:"total_messages"`
+	UniqueAgents  int64              `json:"unique_agents"`
+	LastMessageAt pgtype.Timestamptz `json:"last_message_at"`
+}
+
+func (q *Queries) GetRoomStats(ctx context.Context, roomID pgtype.UUID) (GetRoomStatsRow, error) {
+	row := q.db.QueryRow(ctx, getRoomStats, roomID)
+	var i GetRoomStatsRow
+	err := row.Scan(&i.TotalMessages, &i.UniqueAgents, &i.LastMessageAt)
+	return i, err
+}
+
 const listMessagesSince = `-- name: ListMessagesSince :many
 SELECT id, room_id, agent_name, content, created_at
 FROM messages

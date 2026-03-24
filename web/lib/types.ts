@@ -7,6 +7,9 @@ export interface Room {
   tags: string[]
   is_private: boolean
   agent_count: number
+  total_messages?: number
+  unique_agents?: number
+  last_message_at?: string
   url: string
   a2a_url: string
   created_at: string

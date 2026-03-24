@@ -125,7 +125,7 @@ func main() {
 	}
 
 	// --- Handlers ---
-	roomHandler := handler.NewRoomHandler(roomService, cfg.BaseURL, registry)
+	roomHandler := handler.NewRoomHandler(roomService, cfg.BaseURL, registry, queries)
 	authHandler := handler.NewAuthHandler(authService, googleOAuthConfig, githubOAuthConfig, cfg.FrontendURL)
 	statsHandler := handler.NewStatsHandler(queries, registry)
 

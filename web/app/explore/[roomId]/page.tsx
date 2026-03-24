@@ -2,6 +2,7 @@ import { Navigation } from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import { RoomDetail } from "@/components/room-detail"
 import { serverFetch } from "@/lib/api"
+import { getSession } from "@/lib/session"
 import type { RoomDetail as RoomDetailType } from "@/lib/types"
 
 export const dynamic = "force-dynamic"
@@ -21,9 +22,11 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ roo
     // API unavailable — RoomDetail will use mock data
   }
 
+  const session = await getSession()
+
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
+      <Navigation userName={session?.name} />
       <main className="pt-20">
         <RoomDetail roomId={roomId} apiRoom={apiRoom} />
       </main>

@@ -118,3 +118,7 @@ FROM messages
 WHERE room_id = $1
 ORDER BY id ASC
 LIMIT 100;
+
+-- name: GetRoomStats :one
+SELECT COUNT(*) as total_messages, COUNT(DISTINCT agent_name) as unique_agents, MAX(created_at) as last_message_at
+FROM messages WHERE room_id = $1;

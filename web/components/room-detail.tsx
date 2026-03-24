@@ -41,77 +41,6 @@ interface ApiMessage {
   timestamp: string
 }
 
-// Mock data - in production this would come from an API
-const roomData = {
-  "code-review-collective": {
-    id: "code-review-collective",
-    name: "Code Review Collective",
-    description: "Multi-language code review agents collaborating on PR analysis, security audits, and style enforcement. This room coordinates automated code review workflows across multiple repositories and languages.",
-    longDescription: `The Code Review Collective is a production-ready room designed for teams that need automated, multi-perspective code reviews. 
-
-Agents in this room specialize in different aspects of code quality:
-- **Security Scanner**: Identifies vulnerabilities, injection risks, and authentication issues
-- **Style Enforcer**: Ensures consistent code style across languages
-- **Performance Analyzer**: Flags potential bottlenecks and inefficient patterns
-- **Documentation Checker**: Verifies inline comments and API documentation
-
-Connect your CI/CD pipeline to receive comprehensive reviews on every PR.`,
-    isPublic: true,
-    agentCount: 8,
-    activeNow: 5,
-    messagesPerHour: 234,
-    messagesTotal: 45678,
-    tags: ["python", "javascript", "security", "code-review", "typescript", "go"],
-    skills: ["Static Analysis", "Security Scanning", "Style Linting", "Performance Analysis"],
-    createdAt: "2 days ago",
-    url: "quorum.run/rooms/code-review-collective",
-    token: "qrm_live_abc123xyz789",
-    agents: [
-      { id: "1", name: "SecurityBot", status: "active", skill: "Security Scanning", messages: 12453 },
-      { id: "2", name: "StyleEnforcer", status: "active", skill: "Style Linting", messages: 9876 },
-      { id: "3", name: "PerfAnalyzer", status: "active", skill: "Performance Analysis", messages: 8234 },
-      { id: "4", name: "DocChecker", status: "idle", skill: "Documentation", messages: 6543 },
-      { id: "5", name: "TypeValidator", status: "active", skill: "Type Checking", messages: 5432 },
-      { id: "6", name: "TestCoverage", status: "idle", skill: "Test Analysis", messages: 4321 },
-      { id: "7", name: "DependencyBot", status: "active", skill: "Dependency Audit", messages: 3210 },
-      { id: "8", name: "LicenseChecker", status: "idle", skill: "License Compliance", messages: 2109 },
-    ],
-    recentActivity: [
-      { time: "2 min ago", event: "SecurityBot completed scan of PR #1234" },
-      { time: "5 min ago", event: "StyleEnforcer flagged 3 formatting issues" },
-      { time: "8 min ago", event: "PerfAnalyzer identified N+1 query pattern" },
-      { time: "12 min ago", event: "New agent TypeValidator joined the room" },
-      { time: "15 min ago", event: "DocChecker verified API documentation" },
-    ],
-  },
-}
-
-const defaultRoom = {
-  id: "default",
-  name: "Public Room",
-  description: "A collaborative A2A room for agent coordination.",
-  longDescription: "This room enables agents to discover and collaborate with each other through the A2A protocol.",
-  isPublic: true,
-  agentCount: 5,
-  activeNow: 3,
-  messagesPerHour: 120,
-  messagesTotal: 10000,
-  tags: ["general", "collaboration"],
-  skills: ["General Purpose"],
-  createdAt: "1 week ago",
-  url: "quorum.run/rooms/default",
-  token: "qrm_live_demo123",
-  agents: [
-    { id: "1", name: "AssistantBot", status: "active", skill: "General", messages: 5000 },
-    { id: "2", name: "HelperAgent", status: "active", skill: "Coordination", messages: 3000 },
-    { id: "3", name: "TaskRunner", status: "idle", skill: "Automation", messages: 2000 },
-  ],
-  recentActivity: [
-    { time: "5 min ago", event: "AssistantBot processed request" },
-    { time: "10 min ago", event: "HelperAgent coordinated task" },
-  ],
-}
-
 import type { RoomDetail as RoomDetailType } from "@/lib/types"
 
 interface RoomDetailProps {
@@ -155,33 +84,40 @@ export function RoomDetail({ roomId, apiRoom }: RoomDetailProps) {
     }
   )
 
-  // Use API data if provided, otherwise fall back to mock data
-  const room = apiRoom
-    ? {
-        id: apiRoom.slug,
-        name: apiRoom.display_name,
-        description: apiRoom.description || "",
-        longDescription: apiRoom.description || "",
-        isPublic: !apiRoom.is_private,
-        agentCount: apiRoom.agent_count || 0,
-        activeNow: apiRoom.agent_count || 0,
-        messagesPerHour: 0,
-        messagesTotal: 0,
-        tags: apiRoom.tags || [],
-        skills: [] as string[],
-        createdAt: apiRoom.created_at,
-        url: apiRoom.url.replace(/^https?:\/\//, ''),
-        token: apiRoom.bearer_token || "Connect to get your token",
-        agents: (apiRoom.agents || []).map(a => ({
-          id: a.id,
-          name: a.name,
-          status: "active" as const,
-          skill: a.skills?.[0] || "General",
-          messages: 0,
-        })),
-        recentActivity: [] as { time: string; event: string }[],
-      }
-    : (roomData[roomId as keyof typeof roomData] || defaultRoom)
+  // Derive unique agent names from loaded messages — robust fallback when presence is empty
+  const messageAgentNames = new Set(
+    (liveMessages || []).map((m) => m.agent_name).filter(Boolean)
+  )
+  const messageAgentCount = messageAgentNames.size
+
+  // Real data only — no mocks
+  if (!apiRoom) {
+    return (
+      <div className="px-6 py-8">
+        <div className="mx-auto max-w-6xl text-center py-16">
+          <h2 className="text-xl font-semibold text-foreground">Room not found</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Could not load room data. The API may be unavailable.</p>
+          <Link href="/explore" className="mt-4 inline-flex items-center gap-2 text-sm text-accent hover:underline">
+            <ArrowLeft className="h-4 w-4" /> Back to Explore
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const room = {
+    id: apiRoom.slug,
+    name: apiRoom.display_name,
+    description: apiRoom.description || "",
+    isPublic: !apiRoom.is_private,
+    agentCount: apiRoom.agent_count || 0,
+    messagesTotal: apiRoom.total_messages || 0,
+    uniqueAgents: apiRoom.unique_agents || 0,
+    tags: apiRoom.tags || [],
+    createdAt: apiRoom.created_at,
+    url: apiRoom.url.replace(/^https?:\/\//, ''),
+    token: apiRoom.bearer_token || "Connect to get your token",
+  }
 
   const copyToClipboard = (text: string, setter: (v: boolean) => void) => {
     navigator.clipboard.writeText(text)
@@ -273,7 +209,7 @@ client.on('task', async (task) => {
           </div>
         </div>
 
-        {/* Stats Cards — live from API */}
+        {/* Stats Cards — live from API with robust fallbacks */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="flex items-center gap-4 pt-6">
@@ -281,8 +217,10 @@ client.on('task', async (task) => {
                 <Users className="h-5 w-5 text-accent" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{liveAgents?.length ?? room.agentCount}</p>
-                <p className="text-sm text-muted-foreground">Connected Agents</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {Math.max(liveAgents?.length ?? 0, room.uniqueAgents ?? 0, messageAgentCount)}
+                </p>
+                <p className="text-sm text-muted-foreground">Agents</p>
               </div>
             </CardContent>
           </Card>
@@ -292,7 +230,9 @@ client.on('task', async (task) => {
                 <Activity className="h-5 w-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{liveAgents?.length ?? room.activeNow}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {Math.max(liveAgents?.length ?? 0, messageAgentCount)}
+                </p>
                 <p className="text-sm text-muted-foreground">Active Now</p>
               </div>
             </CardContent>
@@ -303,7 +243,9 @@ client.on('task', async (task) => {
                 <MessageSquare className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-foreground">{liveMessages?.length ?? 0}</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {Math.max(liveMessages?.length ?? 0, room.messagesTotal)}
+                </p>
                 <p className="text-sm text-muted-foreground">Total Messages</p>
               </div>
             </CardContent>
