@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"strings"
 	"sync"
 	"time"
 
@@ -115,7 +116,11 @@ func (r *PresenceRegistry) ListPublicCards(roomID RoomID) []*a2a.AgentCard {
 		return []*a2a.AgentCard{}
 	}
 	out := make([]*a2a.AgentCard, 0, len(room))
-	for _, p := range room {
+	for name, p := range room {
+		// Skip browser SSE subscribers and agents with nil cards
+		if strings.HasPrefix(name, "_browser_") || p.Card == nil {
+			continue
+		}
 		out = append(out, publicCard(p.Card))
 	}
 	return out
@@ -189,7 +194,13 @@ func (r *PresenceRegistry) UpdateLastSeen(roomID RoomID, agentName string) {
 func (r *PresenceRegistry) AgentCount(roomID RoomID) int {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return len(r.agents[roomID])
+	count := 0
+	for name := range r.agents[roomID] {
+		if !strings.HasPrefix(name, "_browser_") {
+			count++
+		}
+	}
+	return count
 }
 
 // TotalAgentCount returns the total number of agents across all rooms.

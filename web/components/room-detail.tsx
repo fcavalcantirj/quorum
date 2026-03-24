@@ -429,7 +429,7 @@ client.on('task', async (task) => {
           <TabsContent value="agents" className="mt-6">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {(liveAgents || []).length > 0 ? (
-                liveAgents!.map((agent) => (
+                liveAgents!.filter((a) => a != null).map((agent) => (
                   <Card key={agent.name}>
                     <CardContent className="flex items-center gap-4 pt-6">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
